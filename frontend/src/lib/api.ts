@@ -387,12 +387,20 @@ export const autoCoach = async (
 export const getRoleMatchScore = async (
   resumeText: string,
   targetRole: string | null,
+  analysisData?: AnalyzeResponse | null,
   signal?: AbortSignal
 ): Promise<{ score: number; debug: { hash: string; provider: string } }> => {
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}/api/predictScore`;
   
   try {
+    // Prepare analysis_data if provided
+    const analysis_data = analysisData ? {
+      skills: analysisData.skills,
+      keywords_detected: analysisData.keywords_detected || [],
+      strengths: analysisData.strengths || [],
+    } : null;
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -401,6 +409,7 @@ export const getRoleMatchScore = async (
       body: JSON.stringify({
         resume_text: resumeText,
         target_role: targetRole || null,
+        analysis_data: analysis_data,
       }),
       signal,
     });

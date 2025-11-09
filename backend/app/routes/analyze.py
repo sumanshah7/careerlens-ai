@@ -465,70 +465,104 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
             strengths.append("Professional background in relevant domain")
     
     # Generate areas for growth based on target_role and domain
+    # Use actual skills from analysis instead of checking keywords in resume text
     areas_for_growth = []
     target_role_lower = (target_role or "").lower()
     
-    # Role-aware gap detection
+    # Build a set of all skills detected in the resume (from analysis)
+    resume_skills_set = set()
+    for skill in skills_core:
+        resume_skills_set.add(skill.lower().strip())
+    for skill in skills_adjacent:
+        resume_skills_set.add(skill.lower().strip())
+    for skill in skills_advanced:
+        resume_skills_set.add(skill.lower().strip())
+    for keyword in keywords:
+        resume_skills_set.add(keyword.lower().strip())
+    
+    # Role-aware gap detection - compare actual resume skills vs target role requirements
     if "ai engineer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower:
-        # AI Engineer specific gaps
-        if "pytorch" not in resume_lower and "tensorflow" not in resume_lower:
-            areas_for_growth.append("Deep learning frameworks (PyTorch or TensorFlow)")
-        if "llm" not in resume_lower and "transformer" not in resume_lower and "gpt" not in resume_lower:
-            areas_for_growth.append("Large Language Models (LLMs) and transformer architectures")
-        if "mlops" not in resume_lower and "model deployment" not in resume_lower:
-            areas_for_growth.append("MLOps and model deployment practices")
-        if "vector" not in resume_lower and "embedding" not in resume_lower:
-            areas_for_growth.append("Vector databases and embeddings")
-        if "python" not in resume_lower:
-            areas_for_growth.append("Python for machine learning")
-        if "sagemaker" not in resume_lower and "vertex" not in resume_lower:
-            areas_for_growth.append("Cloud ML platforms (AWS SageMaker, GCP Vertex AI)")
+        # AI Engineer specific gaps - check against actual resume skills
+        matrix = ROLE_COMPETENCY_MATRIX.get("AI Engineer", {})
+        for skill_area, required_keywords in matrix.items():
+            # Check if any required keyword matches a skill in the resume
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                # Check if this keyword matches any resume skill
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
+            # If skill is missing, add it as a gap
+            if not has_skill:
+                # Map skill area to readable gap description
+                if skill_area == "Deep Learning":
+                    areas_for_growth.append("Deep learning frameworks (PyTorch or TensorFlow)")
+                elif skill_area == "LLMs":
+                    areas_for_growth.append("Large Language Models (LLMs) and transformer architectures")
+                elif skill_area == "MLOps":
+                    areas_for_growth.append("MLOps and model deployment practices")
+                elif skill_area == "Vector DBs":
+                    areas_for_growth.append("Vector databases and embeddings")
+                elif skill_area == "Python ML":
+                    areas_for_growth.append("Python for machine learning")
+                elif skill_area == "Cloud ML":
+                    areas_for_growth.append("Cloud ML platforms (AWS SageMaker, GCP Vertex AI)")
+                else:
+                    areas_for_growth.append(skill_area)
     
     elif "data analyst" in target_role_lower:
-        # Data Analyst competency matrix - check each required skill area
+        # Data Analyst competency matrix - check each required skill area against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Data Analyst", {})
-        
-        # SQL: joins, window functions, CTEs
-        if "sql" not in resume_lower:
-            areas_for_growth.append("SQL fundamentals (joins, window functions, CTEs)")
-        elif "join" not in resume_lower and "window" not in resume_lower and "cte" not in resume_lower:
-            areas_for_growth.append("Advanced SQL (window functions, CTEs)")
-        
-        # Excel: pivot tables, VLOOKUP/XLOOKUP
-        if "excel" not in resume_lower:
-            areas_for_growth.append("Excel (pivot tables, VLOOKUP/XLOOKUP)")
-        elif "pivot" not in resume_lower and "vlookup" not in resume_lower and "xlookup" not in resume_lower:
-            areas_for_growth.append("Advanced Excel (pivot tables, lookup functions)")
-        
-        # BI Tools: Power BI, Tableau, Looker
-        if "tableau" not in resume_lower and "power bi" not in resume_lower and "looker" not in resume_lower:
-            areas_for_growth.append("BI tools (Power BI, Tableau, or Looker)")
-        elif "dashboard" not in resume_lower and "visualization" not in resume_lower:
-            areas_for_growth.append("Dashboard creation and data visualization")
-        
-        # Statistics: hypothesis tests, A/B testing
-        if "statistics" not in resume_lower and "statistical" not in resume_lower:
-            areas_for_growth.append("Statistical analysis (hypothesis testing, A/B testing)")
-        elif ("hypothesis" not in resume_lower and "a/b" not in resume_lower and "ab test" not in resume_lower):
-            areas_for_growth.append("A/B testing design and evaluation")
-        
-        # Python: pandas, numpy
-        if "python" not in resume_lower:
-            areas_for_growth.append("Python for data analysis (pandas, numpy)")
-        elif "pandas" not in resume_lower and "numpy" not in resume_lower:
-            areas_for_growth.append("Python data libraries (pandas, numpy)")
-        
-        # Data Modeling/ETL
-        if "etl" not in resume_lower and "data pipeline" not in resume_lower and "data modeling" not in resume_lower:
-            areas_for_growth.append("Data modeling and ETL processes")
-        
-        # Warehouse: Snowflake, BigQuery, Redshift
-        if "snowflake" not in resume_lower and "bigquery" not in resume_lower and "redshift" not in resume_lower and "data warehouse" not in resume_lower:
-            areas_for_growth.append("Data warehouse platforms (Snowflake, BigQuery, or Redshift)")
-        
-        # Dashboarding KPIs
-        if "kpi" not in resume_lower and "metric" not in resume_lower and "dashboard" not in resume_lower:
-            areas_for_growth.append("KPI dashboarding and metric reporting")
+        for skill_area, required_keywords in matrix.items():
+            # Check if any required keyword matches a skill in the resume
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                # Check if this keyword matches any resume skill
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
+            # If skill is missing, add it as a gap
+            if not has_skill:
+                # Map skill area to readable gap description
+                if skill_area == "SQL":
+                    # Check if SQL is present but advanced features are not
+                    has_sql = any("sql" in skill for skill in resume_skills_set)
+                    if has_sql:
+                        areas_for_growth.append("Advanced SQL (window functions, CTEs)")
+                    else:
+                        areas_for_growth.append("SQL fundamentals (joins, window functions, CTEs)")
+                elif skill_area == "Excel":
+                    has_excel = any("excel" in skill for skill in resume_skills_set)
+                    if has_excel:
+                        areas_for_growth.append("Advanced Excel (pivot tables, lookup functions)")
+                    else:
+                        areas_for_growth.append("Excel (pivot tables, VLOOKUP/XLOOKUP)")
+                elif skill_area == "BI Tools":
+                    areas_for_growth.append("BI tools (Power BI, Tableau, or Looker)")
+                elif skill_area == "Statistics":
+                    areas_for_growth.append("Statistical analysis (hypothesis testing, A/B testing)")
+                elif skill_area == "Python":
+                    has_python = any("python" in skill for skill in resume_skills_set)
+                    if has_python:
+                        areas_for_growth.append("Python data libraries (pandas, numpy)")
+                    else:
+                        areas_for_growth.append("Python for data analysis (pandas, numpy)")
+                elif skill_area == "Data Modeling":
+                    areas_for_growth.append("Data modeling and ETL processes")
+                elif skill_area == "Warehouse":
+                    areas_for_growth.append("Data warehouse platforms (Snowflake, BigQuery, or Redshift)")
+                elif skill_area == "Dashboarding":
+                    areas_for_growth.append("KPI dashboarding and metric reporting")
+                else:
+                    areas_for_growth.append(skill_area)
     
     elif "frontend" in target_role_lower or "react" in target_role_lower:
         # Frontend Engineer specific gaps - only suggest if React is present
@@ -544,59 +578,123 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
             # If React is not present, suggest it
             areas_for_growth.append("React framework")
     elif "clinical research" in target_role_lower or "crc" in target_role_lower:
-        # Clinical Research Coordinator specific gaps
+        # Clinical Research Coordinator specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Clinical Research Coordinator", {})
-        for skill_area, keywords in matrix.items():
-            has_skill = any(kw in resume_lower for kw in keywords)
+        for skill_area, required_keywords in matrix.items():
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
             if not has_skill:
                 areas_for_growth.append(f"{skill_area}")
     elif "medical assistant" in target_role_lower:
-        # Medical Assistant specific gaps
+        # Medical Assistant specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Medical Assistant", {})
-        for skill_area, keywords in matrix.items():
-            has_skill = any(kw in resume_lower for kw in keywords)
+        for skill_area, required_keywords in matrix.items():
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
             if not has_skill:
                 areas_for_growth.append(f"{skill_area}")
     elif "public health" in target_role_lower:
-        # Public Health Analyst specific gaps
+        # Public Health Analyst specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Public Health Analyst", {})
-        for skill_area, keywords in matrix.items():
-            has_skill = any(kw in resume_lower for kw in keywords)
+        for skill_area, required_keywords in matrix.items():
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
             if not has_skill:
                 areas_for_growth.append(f"{skill_area}")
     elif "teacher" in target_role_lower or "educator" in target_role_lower:
-        # Teacher specific gaps
+        # Teacher specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Teacher", {})
-        for skill_area, keywords in matrix.items():
-            has_skill = any(kw in resume_lower for kw in keywords)
+        for skill_area, required_keywords in matrix.items():
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
             if not has_skill:
                 areas_for_growth.append(f"{skill_area}")
     elif "accountant" in target_role_lower:
-        # Accountant specific gaps
+        # Accountant specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Accountant", {})
-        for skill_area, keywords in matrix.items():
-            has_skill = any(kw in resume_lower for kw in keywords)
+        for skill_area, required_keywords in matrix.items():
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
             if not has_skill:
                 areas_for_growth.append(f"{skill_area}")
     elif "financial analyst" in target_role_lower:
-        # Financial Analyst specific gaps
+        # Financial Analyst specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Financial Analyst", {})
-        for skill_area, keywords in matrix.items():
-            has_skill = any(kw in resume_lower for kw in keywords)
+        for skill_area, required_keywords in matrix.items():
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
             if not has_skill:
                 areas_for_growth.append(f"{skill_area}")
     elif "operations" in target_role_lower:
-        # Operations Coordinator specific gaps
+        # Operations Coordinator specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Operations Coordinator", {})
-        for skill_area, keywords in matrix.items():
-            has_skill = any(kw in resume_lower for kw in keywords)
+        for skill_area, required_keywords in matrix.items():
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
             if not has_skill:
                 areas_for_growth.append(f"{skill_area}")
     elif "devops" in target_role_lower or "dev ops" in target_role_lower or "sre" in target_role_lower or "site reliability" in target_role_lower:
-        # DevOps specific gaps
+        # DevOps specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("DevOps", {})
-        for skill_area, keywords in matrix.items():
-            has_skill = any(kw in resume_lower for kw in keywords)
+        for skill_area, required_keywords in matrix.items():
+            has_skill = False
+            for req_kw in required_keywords:
+                req_kw_lower = req_kw.lower()
+                for resume_skill in resume_skills_set:
+                    if req_kw_lower in resume_skill or resume_skill in req_kw_lower:
+                        has_skill = True
+                        break
+                if has_skill:
+                    break
             if not has_skill:
                 areas_for_growth.append(f"{skill_area}")
     elif "cloud" in target_role_lower and ("engineer" in target_role_lower or "architect" in target_role_lower):

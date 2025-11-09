@@ -43,7 +43,7 @@ export const Analysis = () => {
       // Fetch role-specific match score if we have resume text and target role
       if (resumeText && currentRole) {
         setRoleMatchLoading(true);
-        getRoleMatchScore(resumeText, currentRole)
+        getRoleMatchScore(resumeText, currentRole, analysis)
           .then((result) => {
             setRoleMatchScore(result.score);
             console.log('📊 Role match score:', result.score, 'for role:', currentRole);
