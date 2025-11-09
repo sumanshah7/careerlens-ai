@@ -279,7 +279,11 @@ Resume Text:
         
         if target_role:
             base_prompt += f"\nTARGET ROLE (USER SELECTED): {target_role}\n"
-            base_prompt += f"\nCRITICAL: The user has selected '{target_role}' as their target role. This MUST be the PRIMARY domain in your analysis, regardless of profession (tech, healthcare, education, finance, business, etc.):\n"
+            base_prompt += f"\nIMPORTANT: The user has selected '{target_role}' as their target role. However, you MUST first analyze the resume content to determine if '{target_role}' actually matches the resume:\n"
+            base_prompt += f"- If '{target_role}' matches the resume content (e.g., resume mentions AI/ML keywords and target_role is 'AI Engineer'), then '{target_role}' should be the PRIMARY domain\n"
+            base_prompt += f"- If '{target_role}' does NOT match the resume content (e.g., resume is about Animation/Motion Graphics but target_role is 'AI Engineer'), then analyze based on the ACTUAL resume content and ignore the target_role\n"
+            base_prompt += f"- Always prioritize accuracy: the PRIMARY domain should reflect what is actually in the resume, not what the user selected if it doesn't match\n"
+            base_prompt += f"\nCRITICAL: Only use '{target_role}' as the PRIMARY domain if it matches the resume content. Otherwise, analyze based on what is actually in the resume:\n"
             base_prompt += f"- The top domain MUST be '{target_role}' or the closest matching domain from ANY profession:\n"
             base_prompt += f"  * Tech: 'AI Engineer' → 'ML/AI', 'Data Scientist' → 'ML/AI', 'Software Engineer' → 'Backend'/'Full-Stack'\n"
             base_prompt += f"  * Healthcare: 'Registered Nurse' → 'Registered Nurse', 'Medical Assistant' → 'Medical Assistant', 'Clinical Research Coordinator' → 'Clinical Research Coordinator'\n"

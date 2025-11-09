@@ -52,7 +52,11 @@ DOMAIN_KEYWORDS = {
     # Marketing
     "Marketing Specialist": ["marketing", "campaigns", "social media", "seo", "content", "analytics", "branding"],
     # Sales
-    "Sales Representative": ["sales", "crm", "customer relations", "quota", "prospecting", "negotiation"]
+    "Sales Representative": ["sales", "crm", "customer relations", "quota", "prospecting", "negotiation"],
+    # Creative/Design
+    "Animation/Motion Graphics": ["animation", "motion graphics", "after effects", "maya", "blender", "character design", "storyboarding", "3d animation", "2d animation", "motion design", "visual effects", "vfx", "rigging", "unreal engine", "godot", "motion capture", "mocap"],
+    "Graphic Designer": ["graphic design", "photoshop", "illustrator", "indesign", "branding", "visual design", "layout"],
+    "UI/UX Designer": ["ui/ux", "user interface", "user experience", "figma", "wireframing", "prototyping", "design system"]
 }
 
 # Role competency matrices - required skills for each role (tech and non-tech)
@@ -802,10 +806,44 @@ async def analyze_resume(
         if "domains" not in result_dict:
             result_dict["domains"] = classify_domains(resume_text, request.top_k_domains)
         
-        # CRITICAL: If target_role is provided, FORCE it as the top domain (user's explicit choice)
-        # This works for ANY role (tech, medical, business, management, etc.)
-        if target_role and result_dict.get("domains"):
-            print(f"[Analyze] Prioritizing target_role: {target_role}, hash={debug_hash}")
+        # VALIDATION: Check if target_role matches the resume content
+        # If target_role doesn't match, analyze based on actual resume content instead
+        resume_lower = resume_text.lower()
+        target_role_matches = False
+        detected_primary_domain = None
+        
+        if result_dict.get("domains"):
+            detected_primary_domain = result_dict["domains"][0]["name"] if result_dict["domains"] else None
+            detected_primary_domain_lower = detected_primary_domain.lower() if detected_primary_domain else ""
+            
+            # Check if target_role matches the detected primary domain
+            if target_role:
+                target_role_lower = target_role.lower()
+                
+                # Check if target_role keywords match resume content
+                # For AI/ML roles, check for ML/AI keywords in resume
+                if "ai engineer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower:
+                    ai_ml_keywords = ["machine learning", "ml", "ai", "pytorch", "tensorflow", "sklearn", "neural network", "deep learning", "llm", "transformer"]
+                    target_role_matches = any(keyword in resume_lower for keyword in ai_ml_keywords)
+                # For Animation/Motion Graphics, check for animation keywords
+                elif "animation" in target_role_lower or "motion graphics" in target_role_lower or "motion design" in target_role_lower:
+                    animation_keywords = ["animation", "motion graphics", "after effects", "maya", "blender", "character design", "storyboarding", "3d animation", "2d animation", "motion design", "unreal engine", "godot"]
+                    target_role_matches = any(keyword in resume_lower for keyword in animation_keywords)
+                # For other roles, check if target_role domain matches detected domain
+                else:
+                    # Check if target_role is similar to detected primary domain
+                    target_role_matches = (
+                        target_role_lower in detected_primary_domain_lower or
+                        detected_primary_domain_lower in target_role_lower or
+                        any(word in detected_primary_domain_lower for word in target_role_lower.split() if len(word) > 3)
+                    )
+                
+                print(f"[Analyze] target_role: {target_role}, detected_primary: {detected_primary_domain}, matches: {target_role_matches}, hash={debug_hash}")
+        
+        # CRITICAL: Only force target_role if it matches the resume content
+        # If it doesn't match, analyze based on actual resume content
+        if target_role and result_dict.get("domains") and target_role_matches:
+            print(f"[Analyze] target_role matches resume content, prioritizing: {target_role}, hash={debug_hash}")
             target_role_lower = target_role.lower()
             target_domain = None
             
@@ -901,6 +939,7 @@ async def analyze_resume(
                         domains[i]["score"] = min(0.85, domain["score"] - 0.1)  # Reduce competing high scores
                 
                 result_dict["domains"] = domains[:request.top_k_domains]  # Limit to top_k
+                print(f"[Analyze] Forced {target_domain} as top domain, hash={debug_hash}")
                 
                 # Generate role-specific recommended_roles based on target_role (works for all professions)
                 # Use LLM-generated roles if available, otherwise generate based on target_role
@@ -953,6 +992,11 @@ async def analyze_resume(
                 # If strengths are too generic, we'll keep LLM output but log it
                 print(f"[Analyze] Strengths: {result_dict.get('strengths', [])}")
                 print(f"[Analyze] Areas for growth: {result_dict.get('areas_for_growth', [])}")
+        elif target_role and not target_role_matches:
+            # Target role doesn't match resume - analyze based on actual content
+            print(f"[Analyze] target_role '{target_role}' doesn't match resume content (detected: {detected_primary_domain}). Analyzing based on actual resume content instead, hash={debug_hash}")
+            # Don't force target_role - let the analysis be based on actual resume content
+            # The domains are already correctly classified by classify_domains or LLM
         
         if "keywords_detected" not in result_dict:
             top_domain = result_dict["domains"][0]["name"] if result_dict["domains"] else "Professional"
