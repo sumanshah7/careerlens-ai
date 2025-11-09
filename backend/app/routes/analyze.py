@@ -783,7 +783,7 @@ async def analyze_resume(
         anthropic_key = os.getenv("ANTHROPIC_API_KEY")
         if anthropic_key:
             try:
-        result_dict = anthropic_service.analyze_resume(
+                result_dict = anthropic_service.analyze_resume(
                     text=resume_text,
                     target_role=target_role
                 )
