@@ -484,7 +484,16 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
     if "ai engineer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower:
         # AI Engineer specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("AI Engineer", {})
-        for skill_area, required_keywords in matrix.items():
+        missing_gaps = []
+        
+        # Priority order: Core skills first, then important, then nice-to-have
+        priority_order = ["Deep Learning", "LLMs", "MLOps", "Python ML", "Vector DBs", "Cloud ML", "Model Evaluation"]
+        
+        for skill_area in priority_order:
+            if skill_area not in matrix:
+                continue
+            required_keywords = matrix[skill_area]
+            
             # Check if any required keyword matches a skill in the resume
             has_skill = False
             for req_kw in required_keywords:
@@ -496,23 +505,27 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                         break
                 if has_skill:
                     break
+            
             # If skill is missing, add it as a gap
             if not has_skill:
                 # Map skill area to readable gap description
                 if skill_area == "Deep Learning":
-                    areas_for_growth.append("Deep learning frameworks (PyTorch or TensorFlow)")
+                    missing_gaps.append("Deep learning frameworks (PyTorch or TensorFlow)")
                 elif skill_area == "LLMs":
-                    areas_for_growth.append("Large Language Models (LLMs) and transformer architectures")
+                    missing_gaps.append("Large Language Models (LLMs) and transformer architectures")
                 elif skill_area == "MLOps":
-                    areas_for_growth.append("MLOps and model deployment practices")
+                    missing_gaps.append("MLOps and model deployment practices")
                 elif skill_area == "Vector DBs":
-                    areas_for_growth.append("Vector databases and embeddings")
+                    missing_gaps.append("Vector databases and embeddings")
                 elif skill_area == "Python ML":
-                    areas_for_growth.append("Python for machine learning")
+                    missing_gaps.append("Python for machine learning")
                 elif skill_area == "Cloud ML":
-                    areas_for_growth.append("Cloud ML platforms (AWS SageMaker, GCP Vertex AI)")
+                    missing_gaps.append("Cloud ML platforms (AWS SageMaker, GCP Vertex AI)")
                 else:
-                    areas_for_growth.append(skill_area)
+                    missing_gaps.append(skill_area)
+        
+        # Only add top 3-5 most important gaps (prioritize core skills)
+        areas_for_growth.extend(missing_gaps[:5])
     
     elif "data analyst" in target_role_lower:
         # Data Analyst competency matrix - check each required skill area against actual resume skills
