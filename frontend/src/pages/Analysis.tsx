@@ -16,8 +16,6 @@ export const Analysis = () => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [reminders, setReminders] = useState(false);
-  const [roleMatchScore, setRoleMatchScore] = useState<number | null>(null);
-  const [roleMatchLoading, setRoleMatchLoading] = useState(false);
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; providers: { anthropic: boolean; openai: boolean; dedalus: boolean; mcp: boolean } } | null>(null);
   const navigate = useNavigate();
 
@@ -40,22 +38,7 @@ export const Analysis = () => {
       // Simulate small latency for better UX
       setTimeout(() => setInitialLoading(false), 300);
       
-      // Fetch role-specific match score if we have resume text and target role
-      if (resumeText && currentRole) {
-        setRoleMatchLoading(true);
-        getRoleMatchScore(resumeText, currentRole, analysis)
-          .then((result) => {
-            setRoleMatchScore(result.score);
-            console.log('📊 Role match score:', result.score, 'for role:', currentRole);
-          })
-          .catch((error) => {
-            console.error('❌ Failed to fetch role match score:', error);
-            setRoleMatchScore(null);
-          })
-          .finally(() => {
-            setRoleMatchLoading(false);
-          });
-      }
+      // Role Match Score removed - focusing only on Areas for Growth
     } else {
       // Don't redirect, just show empty state
       setInitialLoading(false);
@@ -280,32 +263,6 @@ export const Analysis = () => {
             </CardContent>
           </Card>
 
-          {currentRole && (
-            <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="bg-gradient-to-br from-green-500/5 to-green-500/10 rounded-t-lg">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
-                  Role Match Score
-                </CardTitle>
-                <CardDescription>
-                  Match against: <span className="font-semibold text-green-600 dark:text-green-400">{currentRole}</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                {roleMatchLoading ? (
-                  <div className="flex items-center justify-center h-32">
-                    <Spinner className="h-8 w-8" />
-                  </div>
-                ) : roleMatchScore !== null ? (
-                  <ScoreDonut score={roleMatchScore} />
-                ) : (
-                  <div className="flex items-center justify-center h-32 text-muted-foreground">
-                    <p className="text-sm">Unable to calculate match score</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
 
           <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="bg-gradient-to-br from-blue-500/5 to-blue-500/10 rounded-t-lg">
