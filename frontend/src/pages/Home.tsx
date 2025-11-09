@@ -7,11 +7,11 @@ import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Upload, FileText, TrendingUp } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spinner } from '../components/ui/spinner';
+import { motion } from 'framer-motion';
 
 // SHA256 hash utility
 async function sha256(text: string): Promise<string> {
@@ -198,128 +198,127 @@ export const Home = () => {
   };
 
   return (
-    <div key={resumeHash || 'default'} className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="h-1 w-12 bg-gradient-to-r from-primary to-primary/50 rounded-full"></div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Resume Analysis
-            </h1>
-            <div className="h-1 w-12 bg-gradient-to-r from-primary/50 to-primary rounded-full"></div>
-          </div>
-          <p className="text-muted-foreground text-lg">Upload your resume to get AI-powered career insights</p>
-        </div>
-        <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-card to-card/50">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent rounded-t-lg border-b">
-            <CardTitle className="flex items-center gap-2">
-              <svg className="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              Upload Your Resume
-            </CardTitle>
-            <CardDescription className="text-base">
-              Paste your resume text or upload a file to get started with CareerLens AI
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-6">
-          {/* Role Selection */}
-          <div>
-            <Label htmlFor="role" className="text-sm font-medium mb-2 block">
-              Target Role <span className="text-muted-foreground">(e.g., Software Engineer, Data Scientist)</span>
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                placeholder="Enter target role..."
-                className="flex-1"
-              />
-              {existingRoles.length > 0 && (
-                <Select value={role} onValueChange={handleLoadResume}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Load existing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {existingRoles.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            {existingRoles.length > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                You have {existingRoles.length} saved resume{existingRoles.length > 1 ? 's' : ''} for different roles
+    <div key={resumeHash || 'default'} className="min-h-screen bg-[#F9FAFB]">
+      <div className="max-w-[1100px] mx-auto px-6 py-20 md:py-32">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 text-center"
+        >
+          <h1 className="text-[42px] md:text-[56px] font-semibold text-[#0F172A] mb-6 leading-tight">Resume Analysis</h1>
+          <p className="text-lg md:text-xl text-[#64748B] font-normal leading-relaxed">Upload your resume to get AI-powered career insights</p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <div className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB]">
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Upload Your Resume</h2>
+              <p className="text-sm text-[#64748B] font-normal leading-relaxed">
+                Paste your resume text or upload a file to get started
               </p>
-            )}
-          </div>
-          
-          {/* Resume Text */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">Resume Text</label>
-            <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Paste your resume content here..."
-              className="min-h-[300px]"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block">Or Upload File</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                id="file-upload"
-                onChange={handleFileUpload}
-                accept=".pdf,.txt,.doc,.docx"
-                className="hidden"
-                disabled={uploading}
-              />
+            </div>
+            <div className="space-y-6">
+              {/* Role Selection */}
+              <div>
+                <Label htmlFor="role" className="text-sm font-medium text-[#0F172A] mb-2 block">
+                  Target Role
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    id="role"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    placeholder="e.g., Software Engineer, Data Scientist"
+                    className="flex-1 border-[#E5E7EB] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                  />
+                  {existingRoles.length > 0 && (
+                    <Select value={role} onValueChange={handleLoadResume}>
+                      <SelectTrigger className="w-full border-[#E5E7EB] rounded-lg">
+                        <SelectValue placeholder="Load existing" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {existingRoles.map((r) => (
+                          <SelectItem key={r} value={r}>
+                            {r}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+                {existingRoles.length > 0 && (
+                  <p className="text-xs text-[#64748B] mt-2 font-normal">
+                    You have {existingRoles.length} saved resume{existingRoles.length > 1 ? 's' : ''} for different roles
+                  </p>
+                )}
+              </div>
+              
+              {/* Resume Text */}
+              <div>
+                <Label className="text-sm font-medium text-[#0F172A] mb-2 block">Resume Text</Label>
+                <Textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Paste your resume content here..."
+                  className="min-h-[300px] border-[#E5E7EB] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                />
+              </div>
+              
+              {/* File Upload */}
+              <div>
+                <Label className="text-sm font-medium text-[#0F172A] mb-2 block">Or Upload File</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    id="file-upload"
+                    onChange={handleFileUpload}
+                    accept=".pdf,.txt,.doc,.docx"
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    disabled={uploading}
+                    className="border-[#E5E7EB] rounded-lg !bg-white hover:!bg-[#F9FAFB] hover:!border-[#2563EB] hover:!text-[#0F172A] transition-all duration-200"
+                  >
+                    {uploading ? (
+                      <>
+                        <Spinner className="h-4 w-4 mr-2" size="sm" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Choose File
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
               <Button
-                variant="outline"
-                onClick={() => document.getElementById('file-upload')?.click()}
-                disabled={uploading}
+                onClick={handleSubmit}
+                disabled={loading || !text.trim()}
+                className="w-full bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg font-medium transition-all duration-200 hover:scale-[1.02]"
+                size="lg"
               >
-                {uploading ? (
+                {loading ? (
                   <>
-                    <Spinner className="h-4 w-4 mr-2" size="sm" />
-                    Uploading...
+                    <Spinner className="mr-2" size="sm" />
+                    Analyzing...
                   </>
                 ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Choose File (PDF, TXT, DOC, DOCX)
-                  </>
+                  'Analyze Resume'
                 )}
               </Button>
             </div>
           </div>
-          <Button
-            onClick={handleSubmit}
-            disabled={loading || !text.trim()}
-            className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all"
-            size="lg"
-          >
-            {loading ? (
-              <>
-                <Spinner className="mr-2" size="sm" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Analyze Resume
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+        </motion.div>
       </div>
     </div>
   );

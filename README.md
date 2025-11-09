@@ -288,6 +288,13 @@ cd frontend
 npm test
 ```
 
+**Manual Testing Guide:**
+See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive testing instructions, including:
+- Step-by-step setup
+- Tailor functionality testing (6 test cases)
+- Troubleshooting guide
+- Expected behavior examples
+
 ## 📄 License
 
 This project is private and proprietary.

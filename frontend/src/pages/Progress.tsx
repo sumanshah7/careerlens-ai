@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
@@ -8,6 +7,7 @@ import { TrendingUp, TrendingDown, ArrowRight, CheckCircle2, XCircle, Target, Za
 import { useNavigate } from 'react-router-dom';
 import { ResumeProgress } from '../types';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { motion } from 'framer-motion';
 
 // ProgressModel with safe defaults
 interface ProgressModel {
@@ -95,24 +95,31 @@ const ProgressContent = () => {
   
   if (roles.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
-          <Card className="border-2 shadow-lg">
-            <CardContent className="py-16 text-center">
-              <div className="mb-6">
-                <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-                  <TrendingUp className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">No Resume Progress Yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Upload and analyze a resume to start tracking your progress
-                </p>
+      <div className="min-h-screen bg-[#F9FAFB]">
+        <div className="max-w-[1100px] mx-auto px-6 py-20 md:py-32">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="bg-white rounded-[16px] p-16 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] text-center"
+          >
+            <div className="mb-6">
+              <div className="mx-auto h-16 w-16 rounded-full bg-[#F9FAFB] flex items-center justify-center mb-4">
+                <TrendingUp className="h-8 w-8 text-[#64748B]" />
               </div>
-              <Button onClick={() => navigate('/home')} size="lg">
-                Upload Resume
-              </Button>
-            </CardContent>
-          </Card>
+              <h3 className="text-xl font-semibold text-[#0F172A] mb-2">No Resume Progress Yet</h3>
+              <p className="text-[#64748B] mb-6 font-normal">
+                Upload and analyze a resume to start tracking your progress
+              </p>
+            </div>
+            <Button 
+              onClick={() => navigate('/home')} 
+              size="lg"
+              className="bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg font-medium transition-all duration-200 hover:scale-[1.02]"
+            >
+              Upload Resume
+            </Button>
+          </motion.div>
         </div>
       </div>
     );
@@ -165,74 +172,84 @@ const ProgressContent = () => {
   const scoreBadge = getScoreBadge(progress.currentScore);
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="h-1 w-12 bg-gradient-to-r from-primary to-primary/50 rounded-full"></div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Resume Progress
-            </h1>
-          </div>
-          <p className="text-muted-foreground text-lg">Track your resume improvements with detailed metrics</p>
-        </div>
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <div className="max-w-[1100px] mx-auto px-6 py-20 md:py-32">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 text-center"
+        >
+          <h1 className="text-[42px] md:text-[56px] font-semibold text-[#0F172A] mb-6 leading-tight">Resume Progress</h1>
+          <p className="text-lg md:text-xl text-[#64748B] font-normal leading-relaxed">Track your resume improvements with detailed metrics</p>
+        </motion.div>
         
         {/* Role Selector */}
-        <Card className="mb-6 border-2 shadow-lg">
-          <CardHeader>
-            <CardTitle>Select Role</CardTitle>
-            <CardDescription>Choose a role to view its progress</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select value={selectedRole} onValueChange={handleRoleChange}>
-              <SelectTrigger className="w-full max-w-md">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {role}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] mb-6"
+        >
+          <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Select Role</h2>
+          <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Choose a role to view its progress</p>
+          <Select value={selectedRole} onValueChange={handleRoleChange}>
+            <SelectTrigger className="w-full max-w-md border-[#E5E7EB] rounded-lg">
+              <SelectValue placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent>
+              {roles.map((role) => (
+                <SelectItem key={role} value={role}>
+                  {role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </motion.div>
         
         {progress.versions.length === 0 && selectedRole && (
-          <Card className="border-2 shadow-lg">
-            <CardContent className="py-16 text-center">
-              <div className="mb-6">
-                <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-                  <TrendingUp className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">No Progress Data Yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Upload and analyze a new version of your resume to start tracking progress
-                </p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-white rounded-[16px] p-16 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] text-center"
+          >
+            <div className="mb-6">
+              <div className="mx-auto h-16 w-16 rounded-full bg-[#F9FAFB] flex items-center justify-center mb-4">
+                <TrendingUp className="h-8 w-8 text-[#64748B]" />
               </div>
-              <Button onClick={() => navigate('/home')} size="lg">
-                Upload New Version
-              </Button>
-            </CardContent>
-          </Card>
+              <h3 className="text-xl font-semibold text-[#0F172A] mb-2">No Progress Data Yet</h3>
+              <p className="text-[#64748B] mb-6 font-normal">
+                Upload and analyze a new version of your resume to start tracking progress
+              </p>
+            </div>
+            <Button 
+              onClick={() => navigate('/home')} 
+              size="lg"
+              className="bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg font-medium transition-all duration-200 hover:scale-[1.02]"
+            >
+              Upload New Version
+            </Button>
+          </motion.div>
         )}
         
         {progress.versions.length > 0 && (
           <>
             {/* Enhanced Score Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    Overall Score
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className={`text-5xl font-bold ${getScoreColor(progress.currentScore)}`}>
-                    {progress.currentScore}
-                  </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+              >
+                <h3 className="text-sm font-medium text-[#64748B] mb-2 flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Overall Score
+                </h3>
+                <div className={`text-5xl font-semibold ${getScoreColor(progress.currentScore)}`}>
+                  {progress.currentScore}
+                </div>
                   {scoreBadge && (
                     <div className={`mt-2 inline-block px-2 py-1 rounded text-xs font-medium ${scoreBadge.color}`}>
                       {scoreBadge.label}
@@ -264,108 +281,113 @@ const ProgressContent = () => {
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </motion.div>
               
-              <Card className="border-2 shadow-lg bg-gradient-to-br from-blue-500/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Zap className="h-4 w-4" />
-                    Versions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-5xl font-bold text-blue-600">{progress.versions.length}</div>
-                  <p className="text-sm text-muted-foreground mt-2">Resume versions tracked</p>
-                  {progress.versions.length > 1 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      First: {new Date(progress.versions[0].date).toLocaleDateString()}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+              >
+                <h3 className="text-sm font-medium text-[#64748B] mb-2 flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Versions
+                </h3>
+                <div className="text-5xl font-semibold text-[#2563EB]">{progress.versions.length}</div>
+                <p className="text-sm text-[#64748B] mt-2 font-normal">Resume versions tracked</p>
+                {progress.versions.length > 1 && (
+                  <p className="text-xs text-[#64748B] mt-1 font-normal">
+                    First: {new Date(progress.versions[0].date).toLocaleDateString()}
+                  </p>
+                )}
+              </motion.div>
               
-              <Card className="border-2 shadow-lg bg-gradient-to-br from-purple-500/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Award className="h-4 w-4" />
-                    Skill Improvements
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-5xl font-bold text-purple-600">{progress.skillImprovements?.length || 0}</div>
-                  <p className="text-sm text-muted-foreground mt-2">Skills upgraded</p>
-                  {progress.newSkills && progress.newSkills.length > 0 && (
-                    <p className="text-xs text-green-600 mt-1">
-                      +{progress.newSkills.length} new skills
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+              >
+                <h3 className="text-sm font-medium text-[#64748B] mb-2 flex items-center gap-2">
+                  <Award className="h-4 w-4" />
+                  Skill Improvements
+                </h3>
+                <div className="text-5xl font-semibold text-[#2563EB]">{progress.skillImprovements?.length || 0}</div>
+                <p className="text-sm text-[#64748B] mt-2 font-normal">Skills upgraded</p>
+                {progress.newSkills && progress.newSkills.length > 0 && (
+                  <p className="text-xs text-[#16A34A] mt-1 font-normal">
+                    +{progress.newSkills.length} new skills
+                  </p>
+                )}
+              </motion.div>
               
-              <Card className="border-2 shadow-lg bg-gradient-to-br from-green-500/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Gaps Closed
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-5xl font-bold text-green-600">{progress.closedGaps?.length || 0}</div>
-                  <p className="text-sm text-muted-foreground mt-2">Areas for growth addressed</p>
-                  {progress.closedGaps && progress.closedGaps.length > 0 && (
-                    <p className="text-xs text-green-600 mt-1">Great progress!</p>
-                  )}
-                </CardContent>
-              </Card>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+              >
+                <h3 className="text-sm font-medium text-[#64748B] mb-2 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Gaps Closed
+                </h3>
+                <div className="text-5xl font-semibold text-[#16A34A]">{progress.closedGaps?.length || 0}</div>
+                <p className="text-sm text-[#64748B] mt-2 font-normal">Areas for growth addressed</p>
+                {progress.closedGaps && progress.closedGaps.length > 0 && (
+                  <p className="text-xs text-[#16A34A] mt-1 font-normal">Great progress!</p>
+                )}
+              </motion.div>
             </div>
             
             {/* Score Breakdown */}
             {progress.metrics && (
-            <Card className="mb-6 border-2 shadow-lg">
-                <CardHeader>
-                  <CardTitle>Score Breakdown</CardTitle>
-                  <CardDescription>Detailed metrics that contribute to your overall score</CardDescription>
-                </CardHeader>
-                <CardContent>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
+              className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] mb-6"
+            >
+                <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Score Breakdown</h2>
+                <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Detailed metrics that contribute to your overall score</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Domain Confidence</div>
-                      <div className="text-3xl font-bold text-blue-600">{Math.round(progress.metrics.domainScore)}</div>
-                      <div className="text-xs text-muted-foreground mt-1">40% weight</div>
+                    <div className="p-4 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB]">
+                      <div className="text-sm font-medium text-[#64748B] mb-1 font-normal">Domain Confidence</div>
+                      <div className="text-3xl font-semibold text-[#2563EB]">{Math.round(progress.metrics.domainScore)}</div>
+                      <div className="text-xs text-[#64748B] mt-1 font-normal">40% weight</div>
                     </div>
-                    <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Skills Coverage</div>
-                      <div className="text-3xl font-bold text-purple-600">{Math.round(progress.metrics.skillsScore)}</div>
-                      <div className="text-xs text-muted-foreground mt-1">30% weight</div>
+                    <div className="p-4 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB]">
+                      <div className="text-sm font-medium text-[#64748B] mb-1 font-normal">Skills Coverage</div>
+                      <div className="text-3xl font-semibold text-[#2563EB]">{Math.round(progress.metrics.skillsScore)}</div>
+                      <div className="text-xs text-[#64748B] mt-1 font-normal">30% weight</div>
                     </div>
-                    <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Strengths Balance</div>
-                      <div className="text-3xl font-bold text-green-600">{Math.round(progress.metrics.balanceScore)}</div>
-                      <div className="text-xs text-muted-foreground mt-1">30% weight</div>
+                    <div className="p-4 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB]">
+                      <div className="text-sm font-medium text-[#64748B] mb-1 font-normal">Strengths Balance</div>
+                      <div className="text-3xl font-semibold text-[#16A34A]">{Math.round(progress.metrics.balanceScore)}</div>
+                      <div className="text-xs text-[#64748B] mt-1 font-normal">30% weight</div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+              </motion.div>
             )}
             
             {/* Progress Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <Card className="border-2 shadow-lg">
-              <CardHeader>
-                <CardTitle>Score Over Time</CardTitle>
-                  <CardDescription>Track your overall score improvements</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+              >
+              <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Score Over Time</h2>
+                  <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Track your overall score improvements</p>
+              <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="version" stroke="#6b7280" />
-                    <YAxis domain={[0, 100]} stroke="#6b7280" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="version" stroke="#64748B" />
+                    <YAxis domain={[0, 100]} stroke="#64748B" />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                        border: '1px solid #e5e7eb',
+                        border: '1px solid #E5E7EB',
                         borderRadius: '8px'
                       }} 
                     />
@@ -373,70 +395,72 @@ const ProgressContent = () => {
                     <Line
                       type="monotone"
                       dataKey="score"
-                      stroke="#6366f1"
-                      strokeWidth={3}
-                      dot={{ fill: '#6366f1', r: 5 }}
-                      activeDot={{ r: 7 }}
+                      stroke="#2563EB"
+                      strokeWidth={2}
+                      dot={{ fill: '#2563EB', r: 4 }}
+                      activeDot={{ r: 6 }}
                         name="Overall Score"
                     />
                   </LineChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            </motion.div>
               
-              <Card className="border-2 shadow-lg">
-                <CardHeader>
-                  <CardTitle>Skills Distribution</CardTitle>
-                  <CardDescription>Core, Adjacent, and Advanced skills over time</CardDescription>
-                </CardHeader>
-                <CardContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.9 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+              >
+                <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Skills Distribution</h2>
+                  <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Core, Adjacent, and Advanced skills over time</p>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="version" stroke="#6b7280" />
-                      <YAxis stroke="#6b7280" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="version" stroke="#64748B" />
+                      <YAxis stroke="#64748B" />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                          border: '1px solid #e5e7eb',
+                          border: '1px solid #E5E7EB',
                           borderRadius: '8px'
                         }} 
                       />
                       <Legend />
-                      <Bar dataKey="core" stackId="a" fill="#3b82f6" name="Core" />
+                      <Bar dataKey="core" stackId="a" fill="#2563EB" name="Core" />
                       <Bar dataKey="adjacent" stackId="a" fill="#8b5cf6" name="Adjacent" />
-                      <Bar dataKey="advanced" stackId="a" fill="#10b981" name="Advanced" />
+                      <Bar dataKey="advanced" stackId="a" fill="#16A34A" name="Advanced" />
                     </BarChart>
                   </ResponsiveContainer>
-                </CardContent>
-              </Card>
+              </motion.div>
             </div>
             
             {/* Skill Improvements */}
             {progress.skillImprovements && progress.skillImprovements.length > 0 && (
-              <Card className="mb-6 border-2 shadow-lg bg-gradient-to-br from-green-500/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    Skill Improvements
-                  </CardTitle>
-                  <CardDescription>Skills that have advanced to higher categories</CardDescription>
-                </CardHeader>
-                <CardContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.0 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] mb-6"
+              >
+                <h2 className="text-2xl font-semibold text-[#0F172A] mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-[#16A34A]" />
+                  Skill Improvements
+                </h2>
+                <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Skills that have advanced to higher categories</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {(progress.skillImprovements || []).map((improvement: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-green-500/20 hover:border-green-500/40 transition-colors">
+                      <div key={idx} className="flex items-center gap-3 p-4 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] hover:bg-white transition-colors">
                         <div className="flex-shrink-0">
-                          <ArrowUpRight className="h-5 w-5 text-green-600" />
+                          <ArrowUpRight className="h-5 w-5 text-[#16A34A]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{improvement.skill}</div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-1">
-                            <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs">
+                          <div className="font-medium text-[#0F172A] truncate">{improvement.skill}</div>
+                          <div className="text-sm text-[#64748B] flex items-center gap-1 mt-1">
+                            <span className="px-2 py-0.5 rounded bg-[#F9FAFB] text-[#64748B] text-xs border border-[#E5E7EB]">
                               {improvement.previousStatus}
                             </span>
                             <ArrowRight className="h-3 w-3" />
-                            <span className="px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">
+                            <span className="px-2 py-0.5 rounded bg-[#f0fdf4] text-[#16A34A] text-xs border border-[#86efac]">
                               {improvement.currentStatus}
                             </span>
                           </div>
@@ -444,91 +468,94 @@ const ProgressContent = () => {
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+              </motion.div>
             )}
             
             {/* New Skills */}
             {progress.newSkills && progress.newSkills.length > 0 && (
-              <Card className="mb-6 border-2 shadow-lg bg-gradient-to-br from-blue-500/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-blue-600" />
-                    New Skills Added
-                  </CardTitle>
-                  <CardDescription>Skills that were added in the latest version</CardDescription>
-                </CardHeader>
-                <CardContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.1 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] mb-6"
+              >
+                <h2 className="text-2xl font-semibold text-[#0F172A] mb-3 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-[#2563EB]" />
+                  New Skills Added
+                </h2>
+                <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Skills that were added in the latest version</p>
                   <div className="flex flex-wrap gap-2">
                     {(progress.newSkills || []).map((skill: string, idx: number) => (
                       <span
                         key={idx}
-                        className="px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium border border-blue-200 dark:border-blue-800"
+                        className="px-3 py-1.5 rounded-lg bg-[#F9FAFB] text-[#0F172A] text-sm font-normal border border-[#E5E7EB]"
                       >
                         {skill}
                       </span>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+              </motion.div>
             )}
             
             {/* Closed Gaps */}
             {progress.closedGaps && progress.closedGaps.length > 0 && (
-              <Card className="mb-6 border-2 shadow-lg bg-gradient-to-br from-green-500/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    Areas for Growth Closed
-                  </CardTitle>
-                  <CardDescription>Gaps that have been addressed in your latest version</CardDescription>
-                </CardHeader>
-                <CardContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.2 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] mb-6"
+              >
+                <h2 className="text-2xl font-semibold text-[#0F172A] mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-[#16A34A]" />
+                  Areas for Growth Closed
+                </h2>
+                <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Gaps that have been addressed in your latest version</p>
                   <div className="flex flex-wrap gap-2">
                     {(progress.closedGaps || []).map((gap: string, idx: number) => (
                       <span
                         key={idx}
-                        className="px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-medium border border-green-200 dark:border-green-800 flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-lg bg-[#f0fdf4] text-[#16A34A] text-sm font-medium border border-[#86efac] flex items-center gap-1"
                       >
                         <CheckCircle2 className="h-3 w-3" />
                         {gap}
                       </span>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+              </motion.div>
             )}
             
             {/* Domain Changes */}
             {progress.domainChanges && progress.domainChanges.length > 0 && (
-              <Card className="mb-6 border-2 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Domain Confidence Changes
-                  </CardTitle>
-                  <CardDescription>How your domain confidence scores have changed</CardDescription>
-                </CardHeader>
-                <CardContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.3 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] mb-6"
+              >
+                <h2 className="text-2xl font-semibold text-[#0F172A] mb-3 flex items-center gap-2">
+                  <Target className="h-5 w-5 text-[#64748B]" />
+                  Domain Confidence Changes
+                </h2>
+                <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">How your domain confidence scores have changed</p>
                   <div className="space-y-3">
                     {(progress.domainChanges || []).map((change: any, idx: number) => {
                       const diff = change.currentScore - change.previousScore;
                       return (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB]">
                           <div className="flex-1">
-                            <div className="font-medium">{change.domain}</div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="font-medium text-[#0F172A]">{change.domain}</div>
+                            <div className="text-sm text-[#64748B] font-normal">
                               Confidence score change
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-sm text-muted-foreground">{change.previousScore}%</span>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                            <span className={`text-lg font-bold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                            <span className="text-sm text-[#64748B] font-normal">{change.previousScore}%</span>
+                            <ArrowRight className="h-4 w-4 text-[#64748B]" />
+                            <span className={`text-lg font-semibold ${diff > 0 ? 'text-[#16A34A]' : diff < 0 ? 'text-red-600' : 'text-[#64748B]'}`}>
                               {change.currentScore}%
                             </span>
                             {diff !== 0 && (
-                              <span className={`text-sm font-medium ${diff > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              <span className={`text-sm font-medium ${diff > 0 ? 'text-[#16A34A]' : 'text-red-600'}`}>
                                 {diff > 0 ? '+' : ''}{diff}%
                               </span>
                             )}
@@ -537,76 +564,76 @@ const ProgressContent = () => {
                       );
                     })}
                   </div>
-                </CardContent>
-              </Card>
+              </motion.div>
             )}
             
             {/* Insights */}
             {progress.versions.length > 1 && (
-              <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5" />
-                    Progress Insights
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.4 }}
+                className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB]"
+              >
+                <h2 className="text-2xl font-semibold text-[#0F172A] mb-3 flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-[#64748B]" />
+                  Progress Insights
+                </h2>
+                <div className="space-y-3">
                     {progress.scoreChange !== null && progress.scoreChange > 0 && (
-                      <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                        <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-[#f0fdf4] border border-[#86efac]">
+                        <CheckCircle2 className="h-5 w-5 text-[#16A34A] mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="font-medium text-green-900 dark:text-green-100">
+                          <div className="font-medium text-[#0F172A]">
                             Score Improved by {progress.scoreChange} points
                           </div>
-                          <div className="text-sm text-green-700 dark:text-green-300">
+                          <div className="text-sm text-[#64748B] font-normal">
                             Your resume is getting stronger! Keep up the great work.
                           </div>
                         </div>
                       </div>
                     )}
                     {progress.skillImprovements && progress.skillImprovements.length > 0 && (
-                      <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
-                        <Award className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-[#eff6ff] border border-[#93c5fd]">
+                        <Award className="h-5 w-5 text-[#2563EB] mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="font-medium text-blue-900 dark:text-blue-100">
+                          <div className="font-medium text-[#0F172A]">
                             {progress.skillImprovements.length} skill{progress.skillImprovements.length > 1 ? 's' : ''} upgraded
                           </div>
-                          <div className="text-sm text-blue-700 dark:text-blue-300">
+                          <div className="text-sm text-[#64748B] font-normal">
                             Skills are advancing to higher categories, showing real growth.
                           </div>
                         </div>
                       </div>
                     )}
                     {progress.closedGaps && progress.closedGaps.length > 0 && (
-                      <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                        <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-[#f0fdf4] border border-[#86efac]">
+                        <CheckCircle2 className="h-5 w-5 text-[#16A34A] mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="font-medium text-green-900 dark:text-green-100">
+                          <div className="font-medium text-[#0F172A]">
                             {progress.closedGaps.length} gap{progress.closedGaps.length > 1 ? 's' : ''} closed
                           </div>
-                          <div className="text-sm text-green-700 dark:text-green-300">
+                          <div className="text-sm text-[#64748B] font-normal">
                             You've addressed areas for growth - excellent progress!
                           </div>
                         </div>
                       </div>
                     )}
                     {progress.newSkills && progress.newSkills.length > 0 && (
-                      <div className="flex items-start gap-2 p-3 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
-                        <Zap className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-[#f3e8ff] border border-[#c4b5fd]">
+                        <Zap className="h-5 w-5 text-[#8b5cf6] mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="font-medium text-purple-900 dark:text-purple-100">
+                          <div className="font-medium text-[#0F172A]">
                             {progress.newSkills.length} new skill{progress.newSkills.length > 1 ? 's' : ''} added
                           </div>
-                          <div className="text-sm text-purple-700 dark:text-purple-300">
+                          <div className="text-sm text-[#64748B] font-normal">
                             Expanding your skill set is key to career growth.
                           </div>
                         </div>
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+              </motion.div>
             )}
           </>
         )}

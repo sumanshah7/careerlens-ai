@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getAnalytics } from 'firebase/analytics';
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
@@ -36,6 +36,17 @@ if (isFirebaseConfigured) {
     
     // Initialize Firebase Authentication
     auth = getAuth(app);
+    
+    // Set explicit persistence to avoid sessionStorage issues
+    if (typeof window !== 'undefined' && auth) {
+      try {
+        setPersistence(auth, browserLocalPersistence).catch((error) => {
+          console.warn('Firebase Auth persistence setup failed:', error);
+        });
+      } catch (error) {
+        console.warn('Firebase Auth persistence setup error:', error);
+      }
+    }
     
     // Initialize Analytics (only in browser, not in SSR)
     if (typeof window !== 'undefined') {

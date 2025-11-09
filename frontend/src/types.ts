@@ -75,6 +75,11 @@ export interface TailorResponse {
   bullets: string[];
   pitch: string;
   coverLetter: string;
+  evidenceUsed?: string[];
+  isEvidenceOnly?: boolean;
+  validationWarnings?: string[];
+  doc_id?: string | null; // Firestore document ID
+  pointsToInclude?: string[]; // Suggested points to add to resume
 }
 
 export interface CoachPlan {

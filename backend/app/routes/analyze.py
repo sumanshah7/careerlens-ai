@@ -36,12 +36,14 @@ DOMAIN_KEYWORDS = {
     "QA": ["testing", "selenium", "cypress", "jest", "pytest", "qa", "quality assurance"],
     "Product/BA": ["product", "business analyst", "requirements", "agile", "scrum", "jira"],
     # Healthcare & Clinical
-    "Registered Nurse": ["nursing", "patient care", "medication", "vitals", "charting", "epic", "ehr", "emr", "hipaa", "cpr", "bcls", "acls"],
-    "Medical Assistant": ["medical assistant", "patient care", "vitals", "phlebotomy", "ehr", "epic", "cpt", "icd-10", "scheduling", "appointments"],
+    # Note: "epic" alone is ambiguous (Epic Games vs Epic EHR), so we use "epic ehr" or require context
+    "Registered Nurse": ["nursing", "patient care", "medication administration", "vitals", "charting", "epic ehr", "ehr system", "emr system", "hipaa", "cpr", "bcls", "acls", "nursing license", "registered nurse"],
+    "Medical Assistant": ["medical assistant", "patient care", "vitals", "phlebotomy", "ehr system", "epic ehr", "cpt", "icd-10", "scheduling", "appointments", "medical office", "certified medical assistant"],
     "Clinical Research Coordinator": ["clinical trials", "irb", "gcp", "informed consent", "protocol", "redcap", "data entry", "adverse events", "regulatory"],
     "Public Health Analyst": ["epidemiology", "surveillance", "spss", "stata", "r", "survey", "literature review", "policy", "outbreak", "program evaluation"],
     # Education
-    "Teacher": ["lesson planning", "iep", "classroom management", "assessment", "curriculum", "education", "teaching", "pedagogy"],
+    # Note: "education" alone is ambiguous (university education vs teaching profession), so we use more specific terms
+    "Teacher": ["lesson planning", "iep", "classroom management", "assessment", "curriculum", "teaching", "pedagogy", "student teaching", "teacher certification", "elementary teacher", "high school teacher", "classroom teacher", "substitute teacher"],
     "Education Coordinator": ["curriculum design", "assessment", "iep", "educational programs", "student services"],
     # Finance/Accounting
     "Accountant": ["gaap", "accounting", "quickbooks", "excel", "budgeting", "audits", "financial statements", "reconciliation"],
@@ -165,51 +167,174 @@ def classify_domains(resume_text: str, top_k: int = 5) -> List[Dict[str, Any]]:
     
     # Check for explicit role mentions first (highest priority)
     explicit_role_mentions = {
-        "Data Analyst": ["data analyst", "data analysis", "analyst intern", "business analyst"],
-        "Frontend": ["frontend engineer", "front-end engineer", "front end engineer", "ui developer", "react developer"],
-        "Backend": ["backend engineer", "back-end engineer", "back end engineer", "api developer"],
-        "Full-Stack": ["full stack", "fullstack", "full-stack developer"],
-        "ML/AI": ["ml engineer", "ai engineer", "machine learning engineer", "data scientist"],
-        "Data Engineer": ["data engineer", "etl engineer"],
-        "Product/BA": ["product manager", "business analyst", "product analyst"],
-        "Clinical Research Coordinator": ["clinical research coordinator", "crc", "clinical trial coordinator"],
-        "Public Health Analyst": ["public health analyst", "epidemiologist"],
-        "Teacher": ["teacher", "educator", "instructor"],
-        "Accountant": ["accountant", "cpa"],
-        "Financial Analyst": ["financial analyst", "finance analyst"]
+        "Data Analyst": ["data analyst", "data analysis", "analyst intern", "business analyst", "bi analyst", "analytics engineer"],
+        "Frontend": ["frontend engineer", "front-end engineer", "front end engineer", "ui developer", "react developer", "frontend developer"],
+        "Backend": ["backend engineer", "back-end engineer", "back end engineer", "api developer", "backend developer"],
+        "Full-Stack": ["full stack", "fullstack", "full-stack developer", "full stack developer"],
+        "ML/AI": ["ml engineer", "ai engineer", "machine learning engineer", "data scientist", "ml researcher", "ai researcher"],
+        "Data Engineer": ["data engineer", "etl engineer", "data pipeline engineer"],
+        "Product/BA": ["product manager", "business analyst", "product analyst", "product owner"],
+        "Medical Assistant": ["medical assistant", "ma", "certified medical assistant", "cma"],
+        "Registered Nurse": ["registered nurse", "rn", "staff nurse", "charge nurse"],
+        "Clinical Research Coordinator": ["clinical research coordinator", "crc", "clinical trial coordinator", "research coordinator"],
+        "Public Health Analyst": ["public health analyst", "epidemiologist", "health policy analyst"],
+        "Teacher": ["teacher", "educator", "instructor", "teaching", "elementary teacher", "high school teacher"],
+        "Accountant": ["accountant", "cpa", "staff accountant", "senior accountant"],
+        "Financial Analyst": ["financial analyst", "finance analyst", "financial planning analyst"],
+        "Animation/Motion Graphics": ["animation", "motion graphics", "motion graphics designer", "animator", "motion designer", "3d animator", "2d animator"],
+        "Graphic Designer": ["graphic designer", "visual designer", "brand designer"],
+        "UI/UX Designer": ["ui/ux designer", "ui designer", "ux designer", "user experience designer", "user interface designer"],
+        "Marketing Specialist": ["marketing specialist", "marketing coordinator", "marketing analyst", "digital marketing"],
+        "Operations Coordinator": ["operations coordinator", "operations manager", "operations specialist"],
+        "DevOps": ["devops engineer", "devops", "site reliability engineer", "sre", "cloud engineer"],
+        "Cloud/SA": ["cloud architect", "solutions architect", "aws architect", "azure architect", "gcp architect"],
+        "QA": ["qa engineer", "quality assurance", "test engineer", "qa analyst"]
     }
     
-    # Boost score for explicit role mentions
+    # Boost score for explicit role mentions (highest priority)
     for domain, mentions in explicit_role_mentions.items():
         for mention in mentions:
             if mention in resume_lower:
-                # Strong boost for explicit role mention
-                domain_scores[domain] = domain_scores.get(domain, 0) + 0.5
+                # Strong boost for explicit role mention - this is the PRIMARY indicator
+                # But check if this is a false positive first (e.g., "epic" matching Epic Games, not Epic EHR)
+                is_false_positive = False
+                if domain in ["Medical Assistant", "Registered Nurse"] and mention == "epic":
+                    # "epic" could be Epic Games (animation) or Epic EHR (healthcare)
+                    # Check context - if resume has animation keywords, it's likely Epic Games
+                    animation_keywords = ["animation", "motion graphics", "after effects", "maya", "blender", "unreal engine", "godot", "epic games"]
+                    if any(kw in resume_lower for kw in animation_keywords):
+                        is_false_positive = True
+                        print(f"[Classify] Skipping '{mention}' match for {domain} - likely Epic Games, not Epic EHR")
+                
+                if not is_false_positive:
+                    domain_scores[domain] = domain_scores.get(domain, 0) + 0.7
+                    # If found in job title or summary, boost even more
+                    if any(section in resume_text for section in ["SUMMARY", "Summary", "EXPERIENCE", "Experience", "PROFESSIONAL EXPERIENCE"]):
+                        domain_scores[domain] = domain_scores.get(domain, 0) + 0.2
     
-    # Then check keyword matches
+    # Then check keyword matches (secondary priority)
+    # But be more strict - only add domains with strong evidence
     for domain, keywords in DOMAIN_KEYWORDS.items():
         matches = sum(1 for keyword in keywords if keyword in resume_lower)
         if matches > 0:
             # Score based on match ratio, with boost for multiple matches
-            base_score = min(1.0, (matches / len(keywords)) * 1.5)
+            # More matches = higher confidence
+            # Require at least 3 matches for healthcare/education domains to avoid false positives
+            if domain in ["Medical Assistant", "Registered Nurse", "Teacher", "Clinical Research Coordinator"]:
+                if matches < 3:
+                    continue  # Skip weak matches for these domains - they need strong evidence
+                
+                # Additional context check: if "epic" is matched but no other healthcare keywords, skip
+                if domain in ["Medical Assistant", "Registered Nurse"]:
+                    epic_match = "epic" in resume_lower or "epic ehr" in resume_lower
+                    other_healthcare_keywords = ["nursing", "patient care", "medication", "vitals", "phlebotomy", "cpt", "icd-10", "hipaa", "cpr", "bcls", "acls", "nursing license", "registered nurse", "medical assistant", "certified medical assistant"]
+                    has_other_healthcare = any(kw in resume_lower for kw in other_healthcare_keywords)
+                    if epic_match and not has_other_healthcare:
+                        # "epic" alone without other healthcare context is likely Epic Games
+                        continue
+            
+            if matches >= 5:  # Very strong keyword cluster
+                base_score = 0.75
+            elif matches >= 3:  # Strong keyword cluster
+                base_score = 0.6
+            elif matches >= 2:  # Moderate keyword cluster
+                base_score = 0.45
+            else:  # Weak keyword cluster
+                base_score = 0.3
+            
             # Add to existing score if domain was already found via explicit mention
-            domain_scores[domain] = domain_scores.get(domain, 0) + base_score
+            # But don't let keyword matches override explicit role mentions
+            if domain in domain_scores and domain_scores[domain] >= 0.7:
+                # Explicit mention already found - just add small boost
+                domain_scores[domain] = min(1.0, domain_scores[domain] + 0.1)
+            else:
+                domain_scores[domain] = domain_scores.get(domain, 0) + base_score
     
-    # Special handling: If Data Analyst keywords are strong, prioritize it
-    data_analyst_keywords = ["sql", "excel", "power bi", "tableau", "pandas", "numpy", "statistics", "regression", "etl", "looker", "snowflake", "bigquery"]
-    data_analyst_matches = sum(1 for keyword in data_analyst_keywords if keyword in resume_lower)
-    if data_analyst_matches >= 3:  # Strong Data Analyst signal
-        # Boost Data Analyst if it has strong keyword support
-        if "Data Analyst" in domain_scores:
-            domain_scores["Data Analyst"] = max(domain_scores["Data Analyst"], 0.8)
-        elif data_analyst_matches >= 5:  # Very strong signal
-            domain_scores["Data Analyst"] = 0.85
+    # Special handling: Prioritize primary domain over secondary skills
+    # If a domain has explicit role mention + strong keywords, it's clearly primary
+    # Reduce scores of secondary domains that might be confused with primary
     
-    # Special handling: If Frontend keywords exist but Data Analyst is stronger, don't let Frontend override
-    if "Data Analyst" in domain_scores and "Frontend" in domain_scores:
-        if domain_scores["Data Analyst"] >= 0.7 and domain_scores["Frontend"] < 0.6:
-            # Data Analyst is clearly primary, reduce Frontend score
-            domain_scores["Frontend"] = min(domain_scores["Frontend"], 0.5)
+    # Find the top domain (highest score)
+    if domain_scores:
+        top_domain = max(domain_scores.items(), key=lambda x: x[1])
+        top_domain_name = top_domain[0]
+        top_domain_score = top_domain[1]
+        
+        # If top domain has strong evidence (explicit mention or very strong keywords), reduce secondary domains
+        if top_domain_score >= 0.8:
+            # Aggressively reduce scores of domains that are clearly secondary
+            for domain in domain_scores:
+                if domain != top_domain_name:
+                    # If this domain has much lower score, reduce it significantly
+                    if domain_scores[domain] < top_domain_score - 0.3:
+                        # Reduce by 80% to make it clear it's secondary
+                        domain_scores[domain] = max(0.2, domain_scores[domain] * 0.2)
+                    elif domain_scores[domain] < top_domain_score - 0.2:
+                        # Reduce by 60% for moderately lower scores
+                        domain_scores[domain] = max(0.25, domain_scores[domain] * 0.4)
+        
+        # Aggressively reduce healthcare/education domains if ANY tech domain is primary
+        # Tech domains: Backend, Frontend, ML/AI, Data Analyst, Data Engineer, DevOps, Cloud/SA, Full-Stack, QA, Product/BA
+        tech_domains = ["Backend", "Frontend", "ML/AI", "Data Analyst", "Data Engineer", "DevOps", "Cloud/SA", "Full-Stack", "QA", "Product/BA", "Animation/Motion Graphics", "Graphic Designer", "UI/UX Designer"]
+        if top_domain_name in tech_domains and top_domain_score >= 0.7:
+            for domain in ["Medical Assistant", "Registered Nurse", "Teacher", "Clinical Research Coordinator"]:
+                if domain in domain_scores:
+                    # These are likely false positives from ambiguous keywords
+                    # Aggressively reduce regardless of current score
+                    original_score = domain_scores[domain]
+                    domain_scores[domain] = max(0.15, domain_scores[domain] * 0.05)  # Reduce to 5% of original, min 0.15
+                    print(f"[Classify] Reduced {domain} score from {original_score:.2f} to {domain_scores[domain]:.2f} ({top_domain_name} is primary tech domain)")
+        
+        # Additional check: If top domain is Data Analyst, aggressively reduce DevOps and Cloud/SA domains
+        if top_domain_name == "Data Analyst" and top_domain_score >= 0.8:
+            for domain in ["DevOps", "Cloud/SA"]:
+                if domain in domain_scores:
+                    # These are likely false positives from generic keywords (e.g., "api" could be API gateway or REST API)
+                    # Aggressively reduce unless there's strong evidence (explicit mentions or multiple specific keywords)
+                    # Check if there are explicit role mentions or multiple specific keywords
+                    has_explicit_mention = False
+                    has_multiple_specific_keywords = False
+                    
+                    if domain == "DevOps":
+                        explicit_mentions = ["devops", "dev ops", "site reliability", "sre", "ci/cd", "jenkins", "kubernetes", "k8s", "docker", "terraform", "ansible"]
+                        specific_keywords = ["docker", "kubernetes", "k8s", "ci/cd", "jenkins", "terraform", "ansible"]
+                        has_explicit_mention = any(mention in resume_lower for mention in explicit_mentions)
+                        has_multiple_specific_keywords = sum(1 for keyword in specific_keywords if keyword in resume_lower) >= 2
+                    elif domain == "Cloud/SA":
+                        explicit_mentions = ["cloud architect", "solutions architect", "aws architect", "azure architect", "gcp architect", "cloud engineer"]
+                        specific_keywords = ["lambda", "api gateway", "vpc", "iam", "s3", "ec2", "terraform", "cloudformation"]
+                        has_explicit_mention = any(mention in resume_lower for mention in explicit_mentions)
+                        has_multiple_specific_keywords = sum(1 for keyword in specific_keywords if keyword in resume_lower) >= 2
+                    
+                    if not has_explicit_mention and not has_multiple_specific_keywords:
+                        # Aggressively reduce - likely false positive
+                        domain_scores[domain] = max(0.2, domain_scores[domain] * 0.1)
+                        print(f"[Classify] Reduced {domain} score from {domain_scores[domain] / 0.1:.2f} to {domain_scores[domain]:.2f} (Data Analyst is primary, no strong evidence for {domain})")
+                    else:
+                        # Still reduce, but less aggressively
+                        domain_scores[domain] = max(0.3, domain_scores[domain] * 0.3)
+                        print(f"[Classify] Reduced {domain} score to {domain_scores[domain]:.2f} (Data Analyst is primary, but some evidence for {domain})")
+    
+    # Special handling: Medical Assistant vs Data Analyst confusion
+    if "Medical Assistant" in domain_scores and "Data Analyst" in domain_scores:
+        if domain_scores["Medical Assistant"] >= 0.7 and domain_scores["Data Analyst"] < 0.6:
+            # Medical Assistant is clearly primary, reduce Data Analyst score
+            domain_scores["Data Analyst"] = min(domain_scores["Data Analyst"], 0.4)
+    
+    # Special handling: Animation/Motion Graphics vs ML/AI confusion
+    if "Animation/Motion Graphics" in domain_scores and "ML/AI" in domain_scores:
+        if domain_scores["Animation/Motion Graphics"] >= 0.7 and domain_scores["ML/AI"] < 0.6:
+            # Animation is clearly primary, reduce ML/AI score
+            domain_scores["ML/AI"] = min(domain_scores["ML/AI"], 0.4)
+    
+    # Special handling: Teacher vs other domains
+    if "Teacher" in domain_scores:
+        teacher_score = domain_scores["Teacher"]
+        # If Teacher has strong evidence, reduce unrelated domains
+        if teacher_score >= 0.7:
+            for domain in ["Data Analyst", "Frontend", "Backend", "ML/AI"]:
+                if domain in domain_scores and domain_scores[domain] < 0.6:
+                    domain_scores[domain] = min(domain_scores[domain], 0.4)
     
     if not domain_scores:
         # Default fallback - try to infer from common terms
@@ -223,8 +348,31 @@ def classify_domains(resume_text: str, top_k: int = 5) -> List[Dict[str, Any]]:
             return [{"name": "Professional", "score": 0.3}]
     
     # Sort by score descending and return top_k
-    sorted_domains = sorted(domain_scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
-    return [{"name": domain, "score": min(1.0, score)} for domain, score in sorted_domains]
+    # Filter out domains with very low scores (< 0.4) unless they're in top 2
+    # For healthcare/education domains, require even higher threshold (>= 0.5) unless in top 2
+    sorted_domains = sorted(domain_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    # Filter domains more aggressively
+    filtered_domains = []
+    healthcare_education_domains = ["Medical Assistant", "Registered Nurse", "Teacher", "Clinical Research Coordinator", "Public Health Analyst"]
+    
+    for i, (domain, score) in enumerate(sorted_domains):
+        # Top 2 domains always included
+        if i < 2:
+            filtered_domains.append((domain, score))
+        # Healthcare/education domains need higher threshold (>= 0.5)
+        elif domain in healthcare_education_domains:
+            if score >= 0.5:
+                filtered_domains.append((domain, score))
+            else:
+                break  # Stop once we hit low-scoring healthcare/education domains
+        # Other domains need score >= 0.4
+        elif score >= 0.4:
+            filtered_domains.append((domain, score))
+        else:
+            break  # Stop once we hit low-scoring domains
+    
+    return [{"name": domain, "score": min(1.0, score)} for domain, score in filtered_domains[:top_k]]
 
 
 def classify_domain(resume_text: str) -> Tuple[str, float]:
@@ -395,7 +543,7 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
             strengths.append("Backend programming experience")
         if "api" in resume_lower or "rest" in resume_lower:
             strengths.append("API development skills")
-    elif "ai engineer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower:
+    elif "ai engineer" in target_role_lower or "ai developer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower:
         if "python" in resume_lower:
             strengths.append("Python programming skills")
         if "pytorch" in resume_lower or "tensorflow" in resume_lower:
@@ -449,7 +597,17 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
         for skill in skills_core[:3]:
             skill_lower = skill.lower()
             if skill_lower in resume_lower or any(kw in resume_lower for kw in skill_lower.split()):
-                strengths.append(f"Experience with {skill}")
+                # Fix common typos and capitalize properly
+                skill_display = skill
+                if skill_lower == "ml":
+                    skill_display = "Machine Learning"
+                elif skill_lower == "ai":
+                    skill_display = "AI"
+                elif skill_lower == "sql":
+                    skill_display = "SQL"
+                elif skill_lower == "api":
+                    skill_display = "API"
+                strengths.append(f"Experience with {skill_display}")
     
     # Only add generic experience if "experience" or "years" is actually mentioned AND we have some strengths
     if not strengths and ("experience" in resume_lower or "years" in resume_lower):
@@ -481,7 +639,7 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
         resume_skills_set.add(keyword.lower().strip())
     
     # Role-aware gap detection - compare actual resume skills vs target role requirements
-    if "ai engineer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower:
+    if "ai engineer" in target_role_lower or "ai developer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower:
         # AI Engineer specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("AI Engineer", {})
         missing_gaps = []
@@ -506,23 +664,23 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 if has_skill:
                     break
             
-            # If skill is missing, add it as a gap
+            # If skill is missing, add it as a gap with natural, specific description
             if not has_skill:
-                # Map skill area to readable gap description
+                # Map skill area to readable, natural gap description
                 if skill_area == "Deep Learning":
-                    missing_gaps.append("Deep learning frameworks (PyTorch or TensorFlow)")
+                    missing_gaps.append("PyTorch or TensorFlow for deep learning model development")
                 elif skill_area == "LLMs":
-                    missing_gaps.append("Large Language Models (LLMs) and transformer architectures")
+                    missing_gaps.append("Large Language Models (LLMs) and transformer architectures for AI applications")
                 elif skill_area == "MLOps":
-                    missing_gaps.append("MLOps and model deployment practices")
+                    missing_gaps.append("MLOps practices for model deployment and monitoring in production")
                 elif skill_area == "Vector DBs":
-                    missing_gaps.append("Vector databases and embeddings")
+                    missing_gaps.append("Vector databases (Pinecone, Weaviate) for semantic search and embeddings")
                 elif skill_area == "Python ML":
-                    missing_gaps.append("Python for machine learning")
+                    missing_gaps.append("Python machine learning libraries (scikit-learn, pandas) for data science")
                 elif skill_area == "Cloud ML":
-                    missing_gaps.append("Cloud ML platforms (AWS SageMaker, GCP Vertex AI)")
+                    missing_gaps.append("Cloud ML platforms (AWS SageMaker, GCP Vertex AI) for scalable model training")
                 else:
-                    missing_gaps.append(skill_area)
+                    missing_gaps.append(f"{skill_area} for AI engineering")
         
         # Only add top 3-5 most important gaps (prioritize core skills)
         areas_for_growth.extend(missing_gaps[:5])
@@ -604,10 +762,21 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 if has_skill:
                     break
             if not has_skill:
-                areas_for_growth.append(f"{skill_area}")
+                # Create natural, specific gap descriptions based on skill area
+                gap_descriptions = {
+                    "IRB Protocols": "IRB protocol management and regulatory compliance for clinical trials",
+                    "GCP": "Good Clinical Practice (GCP) guidelines for clinical research",
+                    "REDCap": "REDCap database management for clinical data collection",
+                    "Informed Consent": "Informed consent process and documentation for research participants",
+                    "Clinical Trial Management": "Clinical trial coordination and study management",
+                    "Regulatory Compliance": "Regulatory compliance (FDA, IRB) for clinical research"
+                }
+                gap_text = gap_descriptions.get(skill_area, f"{skill_area} for clinical research coordination")
+                areas_for_growth.append(gap_text)
     elif "medical assistant" in target_role_lower:
         # Medical Assistant specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Medical Assistant", {})
+        missing_gaps = []
         for skill_area, required_keywords in matrix.items():
             has_skill = False
             for req_kw in required_keywords:
@@ -619,10 +788,24 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 if has_skill:
                     break
             if not has_skill:
-                areas_for_growth.append(f"{skill_area}")
+                # Create natural, specific gap descriptions
+                gap_descriptions = {
+                    "Patient Care": "Advanced patient care techniques and bedside manner",
+                    "Vitals": "Vital signs measurement and documentation",
+                    "Phlebotomy": "Phlebotomy and specimen collection procedures",
+                    "EHR/Epic": "Electronic Health Records (EHR) systems, particularly Epic",
+                    "Medical Coding": "Medical coding (CPT/ICD-10) for billing and documentation",
+                    "Scheduling": "Patient scheduling and appointment management",
+                    "HIPAA": "HIPAA compliance and patient privacy regulations"
+                }
+                gap_text = gap_descriptions.get(skill_area, f"{skill_area} for medical assisting")
+                missing_gaps.append(gap_text)
+        # Limit to top 3-5 most important gaps
+        areas_for_growth.extend(missing_gaps[:5])
     elif "public health" in target_role_lower:
         # Public Health Analyst specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Public Health Analyst", {})
+        missing_gaps = []
         for skill_area, required_keywords in matrix.items():
             has_skill = False
             for req_kw in required_keywords:
@@ -634,10 +817,23 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 if has_skill:
                     break
             if not has_skill:
-                areas_for_growth.append(f"{skill_area}")
+                # Create natural, specific gap descriptions
+                gap_descriptions = {
+                    "Epidemiology": "Epidemiological methods and disease surveillance",
+                    "Statistical Analysis": "Statistical analysis software (SPSS, Stata, R) for public health data",
+                    "Survey Design": "Survey design and data collection methods",
+                    "Policy Analysis": "Health policy analysis and program evaluation",
+                    "Surveillance": "Disease surveillance and outbreak investigation",
+                    "Program Evaluation": "Public health program evaluation and impact assessment"
+                }
+                gap_text = gap_descriptions.get(skill_area, f"{skill_area} for public health analysis")
+                missing_gaps.append(gap_text)
+        # Limit to top 3-5 most important gaps
+        areas_for_growth.extend(missing_gaps[:5])
     elif "teacher" in target_role_lower or "educator" in target_role_lower:
         # Teacher specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Teacher", {})
+        missing_gaps = []
         for skill_area, required_keywords in matrix.items():
             has_skill = False
             for req_kw in required_keywords:
@@ -649,10 +845,23 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 if has_skill:
                     break
             if not has_skill:
-                areas_for_growth.append(f"{skill_area}")
+                # Create natural, specific gap descriptions
+                gap_descriptions = {
+                    "Lesson Planning": "Lesson planning and curriculum development",
+                    "IEP Management": "Individualized Education Program (IEP) management and implementation",
+                    "Classroom Management": "Classroom management strategies and student behavior management",
+                    "Assessment Design": "Assessment design and student evaluation methods",
+                    "Differentiated Instruction": "Differentiated instruction techniques for diverse learners",
+                    "Student Engagement": "Student engagement strategies and active learning techniques"
+                }
+                gap_text = gap_descriptions.get(skill_area, f"{skill_area} for teaching")
+                missing_gaps.append(gap_text)
+        # Limit to top 3-5 most important gaps
+        areas_for_growth.extend(missing_gaps[:5])
     elif "accountant" in target_role_lower:
         # Accountant specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Accountant", {})
+        missing_gaps = []
         for skill_area, required_keywords in matrix.items():
             has_skill = False
             for req_kw in required_keywords:
@@ -664,7 +873,19 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 if has_skill:
                     break
             if not has_skill:
-                areas_for_growth.append(f"{skill_area}")
+                # Create natural, specific gap descriptions
+                gap_descriptions = {
+                    "GAAP": "Generally Accepted Accounting Principles (GAAP) knowledge and application",
+                    "QuickBooks": "QuickBooks or similar accounting software proficiency",
+                    "Reconciliation": "Account reconciliation and financial statement preparation",
+                    "Financial Reporting": "Financial reporting and analysis for stakeholders",
+                    "Audit Procedures": "Audit procedures and internal controls",
+                    "Tax Preparation": "Tax preparation and compliance (individual and business)"
+                }
+                gap_text = gap_descriptions.get(skill_area, f"{skill_area} for accounting")
+                missing_gaps.append(gap_text)
+        # Limit to top 3-5 most important gaps
+        areas_for_growth.extend(missing_gaps[:5])
     elif "financial analyst" in target_role_lower:
         # Financial Analyst specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Financial Analyst", {})
@@ -679,7 +900,17 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 if has_skill:
                     break
             if not has_skill:
-                areas_for_growth.append(f"{skill_area}")
+                # Create natural, specific gap descriptions based on skill area
+                gap_descriptions = {
+                    "IRB Protocols": "IRB protocol management and regulatory compliance for clinical trials",
+                    "GCP": "Good Clinical Practice (GCP) guidelines for clinical research",
+                    "REDCap": "REDCap database management for clinical data collection",
+                    "Informed Consent": "Informed consent process and documentation for research participants",
+                    "Clinical Trial Management": "Clinical trial coordination and study management",
+                    "Regulatory Compliance": "Regulatory compliance (FDA, IRB) for clinical research"
+                }
+                gap_text = gap_descriptions.get(skill_area, f"{skill_area} for clinical research coordination")
+                areas_for_growth.append(gap_text)
     elif "operations" in target_role_lower:
         # Operations Coordinator specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("Operations Coordinator", {})
@@ -694,7 +925,17 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 if has_skill:
                     break
             if not has_skill:
-                areas_for_growth.append(f"{skill_area}")
+                # Create natural, specific gap descriptions based on skill area
+                gap_descriptions = {
+                    "IRB Protocols": "IRB protocol management and regulatory compliance for clinical trials",
+                    "GCP": "Good Clinical Practice (GCP) guidelines for clinical research",
+                    "REDCap": "REDCap database management for clinical data collection",
+                    "Informed Consent": "Informed consent process and documentation for research participants",
+                    "Clinical Trial Management": "Clinical trial coordination and study management",
+                    "Regulatory Compliance": "Regulatory compliance (FDA, IRB) for clinical research"
+                }
+                gap_text = gap_descriptions.get(skill_area, f"{skill_area} for clinical research coordination")
+                areas_for_growth.append(gap_text)
     elif "devops" in target_role_lower or "dev ops" in target_role_lower or "sre" in target_role_lower or "site reliability" in target_role_lower:
         # DevOps specific gaps - check against actual resume skills
         matrix = ROLE_COMPETENCY_MATRIX.get("DevOps", {})
@@ -709,7 +950,17 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 if has_skill:
                     break
             if not has_skill:
-                areas_for_growth.append(f"{skill_area}")
+                # Create natural, specific gap descriptions based on skill area
+                gap_descriptions = {
+                    "IRB Protocols": "IRB protocol management and regulatory compliance for clinical trials",
+                    "GCP": "Good Clinical Practice (GCP) guidelines for clinical research",
+                    "REDCap": "REDCap database management for clinical data collection",
+                    "Informed Consent": "Informed consent process and documentation for research participants",
+                    "Clinical Trial Management": "Clinical trial coordination and study management",
+                    "Regulatory Compliance": "Regulatory compliance (FDA, IRB) for clinical research"
+                }
+                gap_text = gap_descriptions.get(skill_area, f"{skill_area} for clinical research coordination")
+                areas_for_growth.append(gap_text)
     elif "cloud" in target_role_lower and ("engineer" in target_role_lower or "architect" in target_role_lower):
         # Cloud/SA specific gaps
         if "aws" not in resume_lower and "azure" not in resume_lower and "gcp" not in resume_lower:
@@ -745,9 +996,23 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
                 areas_for_growth.append("Testing frameworks")
             if "accessibility" not in resume_lower:
                 areas_for_growth.append("Web accessibility")
+        elif top_domain == "Animation/Motion Graphics":
+            # Animation/Motion Graphics specific gaps
+            if "compositing" not in resume_lower and "nuke" not in resume_lower:
+                areas_for_growth.append("Compositing and visual effects integration (Nuke, After Effects)")
+            if "rendering" not in resume_lower and "arnold" not in resume_lower and "vray" not in resume_lower:
+                areas_for_growth.append("Advanced rendering techniques (Arnold, V-Ray, or Cycles)")
+            if "rigging" not in resume_lower:
+                areas_for_growth.append("Character rigging and advanced animation techniques")
+            if "pipeline" not in resume_lower and "workflow" not in resume_lower:
+                areas_for_growth.append("Production pipeline optimization and workflow automation")
+            if "motion capture" not in resume_lower and "mocap" not in resume_lower:
+                areas_for_growth.append("Motion capture integration and cleanup")
         else:
-            if "docker" not in resume_lower:
-                areas_for_growth.append("Containerization technologies")
+            # Only add generic gap if we really don't know what domain this is
+            if top_domain not in ["Medical Assistant", "Registered Nurse", "Teacher", "Clinical Research Coordinator", "Public Health Analyst", "Accountant", "Financial Analyst", "Marketing Specialist", "Graphic Designer", "UI/UX Designer"]:
+                if "docker" not in resume_lower:
+                    areas_for_growth.append("Containerization technologies")
     
     # Ensure areas_for_growth is never empty - add at least one generic gap if nothing found
     if not areas_for_growth:
@@ -771,6 +1036,8 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
             areas_for_growth.append("Lesson planning and curriculum design")
         elif "Accountant" in top_domain or "Financial" in top_domain:
             areas_for_growth.append("GAAP and financial reporting")
+        elif "Animation" in top_domain or "Motion Graphics" in top_domain:
+            areas_for_growth.append("Advanced compositing and visual effects techniques")
         else:
             areas_for_growth.append("Industry best practices and advanced techniques")
     
@@ -873,7 +1140,7 @@ async def analyze_resume(
             target_role_lower = target_role.lower()
             
             # Check if target_role is AI/ML but resume has Animation keywords
-            if ("ai engineer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower):
+            if ("ai engineer" in target_role_lower or "ai developer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower):
                 ai_ml_keywords = ["machine learning", "ml", "ai", "pytorch", "tensorflow", "sklearn", "neural network", "deep learning", "llm", "transformer"]
                 animation_keywords = ["animation", "motion graphics", "after effects", "maya", "blender", "character design", "storyboarding", "3d animation", "2d animation", "motion design", "unreal engine", "godot", "motion capture", "mocap"]
                 
@@ -964,7 +1231,7 @@ async def analyze_resume(
                 
                 # Check if target_role keywords match resume content
                 # For AI/ML roles, check for ML/AI keywords in resume
-                if "ai engineer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower:
+                if "ai engineer" in target_role_lower or "ai developer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower:
                     ai_ml_keywords = ["machine learning", "ml", "ai", "pytorch", "tensorflow", "sklearn", "neural network", "deep learning", "llm", "transformer"]
                     target_role_matches = any(keyword in resume_lower for keyword in ai_ml_keywords)
                 # For Animation/Motion Graphics, check for animation keywords
@@ -991,7 +1258,7 @@ async def analyze_resume(
             
             # Map target_role to domain name (works for all professions)
             # Tech roles
-            if "ai engineer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower or ("ai" in target_role_lower and "engineer" in target_role_lower):
+            if "ai engineer" in target_role_lower or "ai developer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower or ("ai" in target_role_lower and ("engineer" in target_role_lower or "developer" in target_role_lower)):
                 target_domain = "ML/AI"
             elif "data analyst" in target_role_lower or "business analyst" in target_role_lower:
                 target_domain = "Data Analyst"
@@ -1090,8 +1357,8 @@ async def analyze_resume(
                     recommended_roles = [target_role]  # Always include the target role first
                     
                     # Add related roles based on profession family
-                    if "ai engineer" in target_role_lower or "ml engineer" in target_role_lower:
-                        recommended_roles.extend(["ML Engineer", "Data Scientist", "ML Researcher"])
+                    if "ai engineer" in target_role_lower or "ai developer" in target_role_lower or "ml engineer" in target_role_lower:
+                        recommended_roles.extend(["ML Engineer", "AI Engineer", "Data Scientist", "ML Researcher"])
                     elif "data analyst" in target_role_lower:
                         recommended_roles.extend(["Business Analyst", "BI Analyst", "Analytics Engineer"])
                     elif "devops" in target_role_lower or "dev ops" in target_role_lower or "sre" in target_role_lower or "site reliability" in target_role_lower:

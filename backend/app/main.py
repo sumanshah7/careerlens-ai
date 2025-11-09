@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from mangum import Mangum
-from app.routes import analyze, jobs, tailor, coach, predict, upload, roleMatch, generatePlan, jobSearch, linkedinJobs, predictScore
+from app.routes import analyze, jobs, tailor, coach, predict, upload, roleMatch, generatePlan, jobSearch, linkedinJobs, predictScore, pdf, jobDescription
 import traceback
 import time
 import uuid
@@ -44,6 +44,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
         "http://127.0.0.1:5175",
+        "http://localhost:8001",
+        "http://127.0.0.1:8001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -62,6 +64,8 @@ app.include_router(generatePlan.router)
 app.include_router(jobSearch.router)
 app.include_router(linkedinJobs.router)
 app.include_router(predictScore.router)
+app.include_router(pdf.router)
+app.include_router(jobDescription.router)
 
 
 @app.get("/")

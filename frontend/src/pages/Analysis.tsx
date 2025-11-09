@@ -1,15 +1,14 @@
 import { useAppStore } from '../store/useAppStore';
-import { autoCoach, checkHealth, getRoleMatchScore } from '../lib/api';
+import { autoCoach, checkHealth } from '../lib/api';
 import { track } from '../lib/analytics';
 import { ScoreDonut } from '../components/ScoreDonut';
-import { SkillChips } from '../components/SkillChips';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Skeleton } from '../components/ui/skeleton';
 import { Spinner } from '../components/ui/spinner';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 export const Analysis = () => {
   const { analysis, setCoach, resumeText, currentRole } = useAppStore();
@@ -122,40 +121,43 @@ export const Analysis = () => {
   // Show empty state if no analysis
   if (!analysis && !initialLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-1 w-12 bg-gradient-to-r from-primary to-primary/50 rounded-full"></div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                Resume Analysis
-              </h1>
-            </div>
-            <p className="text-muted-foreground text-lg">Your personalized career insights powered by AI</p>
-          </div>
+      <div className="min-h-screen bg-[#f9fafb]">
+        <div className="max-w-[1100px] mx-auto px-6 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-8"
+          >
+            <h1 className="text-4xl font-semibold text-[#111827] mb-3">Resume Analysis</h1>
+            <p className="text-[#6b7280] text-lg font-normal">Your personalized career insights powered by AI</p>
+          </motion.div>
           
-          <Card className="border-2 shadow-lg">
-            <CardContent className="py-16 text-center">
-              <div className="mb-6">
-                <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-                  <svg className="h-8 w-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">No analysis yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Upload and analyze your resume to get started
-                </p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="bg-white rounded-[16px] p-16 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] text-center"
+          >
+            <div className="mb-6">
+              <div className="mx-auto h-16 w-16 rounded-full bg-[#F9FAFB] flex items-center justify-center mb-4">
+                <svg className="h-8 w-8 text-[#64748B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
-              <Button 
-                onClick={() => navigate('/home')} 
-                size="lg"
-                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all"
-              >
-                Go to Resume Upload
-              </Button>
-            </CardContent>
-          </Card>
+              <h3 className="text-xl font-semibold text-[#0F172A] mb-2">No analysis yet</h3>
+              <p className="text-[#64748B] mb-6 font-normal">
+                Upload and analyze your resume to get started
+              </p>
+            </div>
+            <Button 
+              onClick={() => navigate('/home')} 
+              size="lg"
+              className="bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg font-medium transition-all duration-200 hover:scale-[1.02]"
+            >
+              Go to Resume Upload
+            </Button>
+          </motion.div>
         </div>
       </div>
     );
@@ -163,31 +165,25 @@ export const Analysis = () => {
 
   if (initialLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-6">
-          <Skeleton className="h-10 w-64 mb-2" />
-          <Skeleton className="h-5 w-96" />
-        </div>
+      <div className="min-h-screen bg-[#F9FAFB]">
+        <div className="max-w-[1100px] mx-auto px-6 py-20 md:py-32">
+          <div className="mb-12 text-center">
+            <Skeleton className="h-14 w-64 mb-6 mx-auto" />
+            <Skeleton className="h-6 w-96 mx-auto" />
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card>
-            <CardHeader>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB]">
               <Skeleton className="h-6 w-32 mb-2" />
-              <Skeleton className="h-4 w-48" />
-            </CardHeader>
-            <CardContent>
+              <Skeleton className="h-4 w-48 mb-6" />
               <div className="flex items-center justify-center h-[300px]">
                 <Spinner size="lg" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader>
+            <div className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB]">
               <Skeleton className="h-6 w-32 mb-2" />
-              <Skeleton className="h-4 w-48" />
-            </CardHeader>
-            <CardContent>
+              <Skeleton className="h-4 w-48 mb-6" />
               <div className="space-y-4">
                 <Skeleton className="h-4 w-24" />
                 <div className="flex flex-wrap gap-2">
@@ -196,217 +192,193 @@ export const Analysis = () => {
                   <Skeleton className="h-8 w-16" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-24" />
-            </CardHeader>
-            <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB]">
+              <Skeleton className="h-6 w-24 mb-6" />
               <div className="space-y-2">
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-24" />
-            </CardHeader>
-            <CardContent>
+            <div className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB]">
+              <Skeleton className="h-6 w-24 mb-6" />
               <div className="space-y-2">
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header with gradient */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="h-1 w-12 bg-gradient-to-r from-primary to-primary/50 rounded-full"></div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Resume Analysis
-            </h1>
-          </div>
-          <p className="text-muted-foreground text-lg">Your personalized career insights powered by AI</p>
-        </div>
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <div className="max-w-[1100px] mx-auto px-6 py-20 md:py-32">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 text-center"
+        >
+          <h1 className="text-[42px] md:text-[56px] font-semibold text-[#0F172A] mb-6 leading-tight">Resume Analysis</h1>
+          <p className="text-lg md:text-xl text-[#64748B] font-normal leading-relaxed">Your personalized career insights powered by AI</p>
+        </motion.div>
         
         {/* Health check banner */}
         {getHealthBanner()}
 
-        {/* Score Card with enhanced design */}
+        {/* Score and Domains Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-t-lg">
-              <CardTitle className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
-                Overall Score
-              </CardTitle>
-              <CardDescription>Your career readiness assessment</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <ScoreDonut score={analysis.score || Math.round((analysis.domains[0]?.score || 0.5) * 100)} />
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+          >
+            <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Overall Score</h2>
+            <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Your career readiness assessment</p>
+            <ScoreDonut score={analysis.score || Math.round((analysis.domains[0]?.score || 0.5) * 100)} />
+          </motion.div>
 
-
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="bg-gradient-to-br from-blue-500/5 to-blue-500/10 rounded-t-lg">
-              <CardTitle className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                Domains & Skills
-              </CardTitle>
-              <CardDescription>Your technical expertise mapped</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-semibold mb-2">Top Domains</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {analysis.domains.map((domain, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                        {domain.name} ({Math.round(domain.score * 100)}%)
-                      </span>
-                    ))}
-                  </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+          >
+            <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Domains & Skills</h2>
+            <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Your technical expertise mapped</p>
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-medium text-[#0F172A] mb-3">Top Domains</h4>
+                <div className="flex flex-wrap gap-2">
+                  {analysis.domains.map((domain, idx) => (
+                    <span key={idx} className="px-3 py-1.5 bg-[#F9FAFB] text-[#0F172A] rounded-lg text-sm font-normal border border-[#E5E7EB]">
+                      {domain.name} ({Math.round(domain.score * 100)}%)
+                    </span>
+                  ))}
                 </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-[#0F172A] mb-3">Core Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {analysis.skills.core.map((skill, idx) => (
+                    <span key={idx} className="px-2.5 py-1 bg-[#F9FAFB] text-[#0F172A] rounded-md text-xs font-normal border border-[#E5E7EB]">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {analysis.skills.adjacent.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">Core Skills</h4>
+                  <h4 className="text-sm font-medium text-[#0F172A] mb-3">Adjacent Skills</h4>
                   <div className="flex flex-wrap gap-2">
-                    {analysis.skills.core.map((skill, idx) => (
-                      <span key={idx} className="px-2 py-1 bg-green-500/10 text-green-700 dark:text-green-400 rounded text-xs">
+                    {analysis.skills.adjacent.map((skill, idx) => (
+                      <span key={idx} className="px-2.5 py-1 bg-[#F9FAFB] text-[#0F172A] rounded-md text-xs font-normal border border-[#E5E7EB]">
                         {skill}
                       </span>
                     ))}
                   </div>
                 </div>
-                {analysis.skills.adjacent.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold mb-2">Adjacent Skills</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {analysis.skills.adjacent.map((skill, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-blue-500/10 text-blue-700 dark:text-blue-400 rounded text-xs">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Strengths and Weaknesses with better visuals */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card className="border-2 border-green-500/20 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-green-500/5 to-transparent">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                Strengths
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                {analysis.strengths.map((strength, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-sm">
-                    <div className="mt-1 h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0"></div>
-                    <span className="text-foreground">{strength}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 border-amber-500/20 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-amber-500/5 to-transparent">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                Areas for Growth
-              </CardTitle>
-              <CardDescription className="mt-2">
-                {currentRole ? (
-                  <>
-                    Skills to develop for <span className="font-semibold text-amber-600 dark:text-amber-400">{currentRole}</span> role
-                  </>
-                ) : (
-                  "Skills to develop based on your resume analysis"
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                {(analysis.areas_for_growth || analysis.weaknesses || []).map((area, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-sm">
-                    <div className="mt-1 h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0"></div>
-                    <span className="text-foreground">{area}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Suggested Roles with enhanced design */}
-        <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow mb-6 bg-gradient-to-br from-purple-500/5 to-transparent">
-          <CardHeader className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-t-lg">
-            <CardTitle className="flex items-center gap-2">
-              <svg className="h-5 w-5 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-              </svg>
-              Recommended Roles
-            </CardTitle>
-            <CardDescription>Roles tailored to your experience and skills</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="flex flex-wrap gap-3">
-              {(analysis.recommended_roles || analysis.suggestedRoles || analysis.domains.map(d => d.name)).map((role, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    // Navigate to Jobs page with this role pre-filled
-                    navigate('/jobs', { state: { role } });
-                    track('recommended_role_clicked', { role });
-                  }}
-                  className="px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20 rounded-lg text-sm font-medium hover:from-primary/20 hover:to-primary/10 hover:border-primary/40 transition-all cursor-pointer shadow-sm hover:shadow-md"
-                >
-                  {role}
-                </button>
-              ))}
+              )}
             </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        </div>
+
+        {/* Strengths and Areas for Growth */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border-l-4 border-[#2563EB] border-t border-r border-b border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+          >
+            <h2 className="text-2xl font-semibold text-[#0F172A] mb-6">Strengths</h2>
+            <ul className="space-y-3">
+              {analysis.strengths.map((strength, idx) => (
+                <li key={idx} className="flex items-start gap-3 text-sm text-[#0F172A] font-normal">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#2563EB] flex-shrink-0"></div>
+                  <span>{strength}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border-l-4 border-[#F59E0B] border-t border-r border-b border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+          >
+            <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Areas for Growth</h2>
+            <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">
+              {currentRole ? (
+                <>Skills to develop for <span className="font-medium text-[#0F172A]">{currentRole}</span> role</>
+              ) : (
+                "Skills to develop based on your resume analysis"
+              )}
+            </p>
+            <ul className="space-y-3">
+              {(analysis.areas_for_growth || analysis.weaknesses || []).map((area, idx) => (
+                <li key={idx} className="flex items-start gap-3 text-sm text-[#0F172A] font-normal">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#F59E0B] flex-shrink-0"></div>
+                  <span>{area}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        </div>
+
+        {/* Recommended Roles */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200 mb-6"
+        >
+          <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Recommended Roles</h2>
+          <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Roles tailored to your experience and skills</p>
+          <div className="flex flex-wrap gap-3">
+            {(analysis.recommended_roles || analysis.suggestedRoles || analysis.domains.map(d => d.name)).map((role, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  navigate('/jobs', { state: { role } });
+                  track('recommended_role_clicked', { role });
+                }}
+                className="px-4 py-2 bg-[#2563EB] text-white rounded-lg text-sm font-medium hover:bg-[#1d4ed8] transition-all duration-200 hover:scale-[1.02] cursor-pointer"
+              >
+                {role}
+              </button>
+            ))}
+          </div>
+        </motion.div>
 
         {/* CTA Section */}
-        <div className="mt-8 flex flex-col items-center gap-4 p-6 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] flex flex-col items-center gap-4"
+        >
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
               id="reminders"
               checked={reminders}
               onChange={(e) => setReminders(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              className="h-4 w-4 rounded border-[#E5E7EB] text-[#2563EB] focus:ring-[#2563EB]"
             />
-            <label htmlFor="reminders" className="text-sm font-medium cursor-pointer">
+            <label htmlFor="reminders" className="text-sm font-medium text-[#0F172A] cursor-pointer">
               Enable daily reminders for my learning plan
             </label>
           </div>
@@ -414,7 +386,7 @@ export const Analysis = () => {
             onClick={handleGeneratePlan} 
             disabled={loading} 
             size="lg"
-            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all"
+            className="bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg font-medium transition-all duration-200 hover:scale-[1.02]"
           >
             {loading ? (
               <>
@@ -422,15 +394,10 @@ export const Analysis = () => {
                 Generating Plan...
               </>
             ) : (
-              <>
-                <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Generate Personalized Plan
-              </>
+              'Generate Personalized Plan'
             )}
           </Button>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

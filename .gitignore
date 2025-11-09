@@ -61,3 +61,4 @@ htmlcov/
 
 # Documentation builds
 docs/_build/
+backend/.env.bak

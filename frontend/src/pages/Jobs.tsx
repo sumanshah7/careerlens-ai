@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
-import { searchJobs, tailor, checkHealth } from '../lib/api';
+import { searchJobs, tailor, checkHealth, fetchJobDescription } from '../lib/api';
 import { track } from '../lib/analytics';
 import { LinkedInJobCard } from '../components/LinkedInJobCard';
 import { TailorModal } from '../components/TailorModal';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Skeleton } from '../components/ui/skeleton';
+import { useAuth } from '../contexts/AuthContext';
 import { Spinner } from '../components/ui/spinner';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -15,6 +15,7 @@ import { Checkbox } from '../components/ui/checkbox';
 import { Job, TailorResponse, LinkedInJobSearchItem } from '../types';
 import { toast } from 'sonner';
 import { Sparkles, Search, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 // SHA256 hash utility
 async function sha256(text: string): Promise<string> {
@@ -27,7 +28,8 @@ async function sha256(text: string): Promise<string> {
 
 export const Jobs = () => {
   const location = useLocation();
-  const { setTailor, resumeText, tailor: tailorData, analysis } = useAppStore();
+  const { setTailor, resumeText, tailor: tailorData, analysis, currentResumeId, currentRole, getResumeByRole, resumes } = useAppStore();
+  const { currentUser } = useAuth();
   const [linkedInJobs, setLinkedInJobs] = useState<LinkedInJobSearchItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -35,6 +37,11 @@ export const Jobs = () => {
   const [selectedJob, setSelectedJob] = useState<LinkedInJobSearchItem | null>(null);
   const [tailorOpen, setTailorOpen] = useState(false);
   const [currentTailor, setCurrentTailor] = useState<TailorResponse | null>(null);
+  
+  const handleTailorRegenerate = (newTailor: TailorResponse) => {
+    setCurrentTailor(newTailor);
+    setTailor(newTailor);
+  };
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; providers: { anthropic: boolean; openai: boolean; dedalus: boolean; mcp: boolean } } | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [filters, setFilters] = useState({
@@ -183,21 +190,99 @@ export const Jobs = () => {
     track('tailor_clicked', { jobId: job.id, jobMatch: job.matchScore });
     setSelectedJob(job);
     setTailorLoading(true);
+    setTailorOpen(true); // Open modal immediately to show loading state
+    setCurrentTailor({
+      bullets: [],
+      pitch: '',
+      coverLetter: '',
+      evidenceUsed: [],
+      isEvidenceOnly: false,
+      validationWarnings: [],
+      pointsToInclude: []
+    }); // Set empty state to show loading
+    
     try {
-      // Get top skills from analysis if available
+      // Step 0: Get resume text - try multiple sources
+      let actualResumeText = resumeText || '';
+      
+      // If resumeText is empty, try to get it from saved resumes
+      if (!actualResumeText || actualResumeText.trim().length === 0) {
+        // Try to get from current resume ID
+        if (currentResumeId) {
+          const currentResume = resumes.find(r => r.id === currentResumeId);
+          if (currentResume && currentResume.resumeText) {
+            actualResumeText = currentResume.resumeText;
+            console.log('✅ Loaded resume from currentResumeId');
+          }
+        }
+        
+        // If still empty, try to get from current role
+        if ((!actualResumeText || actualResumeText.trim().length === 0) && currentRole) {
+          const roleResume = getResumeByRole(currentRole);
+          if (roleResume && roleResume.resumeText) {
+            actualResumeText = roleResume.resumeText;
+            console.log('✅ Loaded resume from currentRole');
+          }
+        }
+        
+        // If still empty, try to get from the most recent resume
+        if (!actualResumeText || actualResumeText.trim().length === 0) {
+          const mostRecentResume = resumes.length > 0 
+            ? resumes.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
+            : null;
+          if (mostRecentResume && mostRecentResume.resumeText) {
+            actualResumeText = mostRecentResume.resumeText;
+            console.log('✅ Loaded resume from most recent resume');
+          }
+        }
+      }
+      
+      // Validate that we have resume text
+      if (!actualResumeText || actualResumeText.trim().length < 50) {
+        throw new Error('Resume text is required. Please upload your resume first on the Home page.');
+      }
+      
+      // Step 1: Fetch full job description from URL
+      let jobDescription = job.description_snippet || '';
+      
+      if (job.url && !job.url.includes('expired_jd_redirect')) {
+        try {
+          toast.info('Fetching full job description...', { duration: 2000 });
+          const descResponse = await fetchJobDescription(job.url);
+          if (descResponse.success && descResponse.description && descResponse.description.length > 200) {
+            jobDescription = descResponse.description;
+            console.log('✅ Fetched full job description:', descResponse.description.length, 'characters');
+          } else {
+            console.warn('⚠️ Could not fetch full description, using snippet');
+            // Keep using snippet if fetch fails
+          }
+        } catch (descError) {
+          console.warn('⚠️ Error fetching job description:', descError);
+          // Continue with snippet if fetch fails
+        }
+      }
+      
+      // Validate that we have a job description
+      if (!jobDescription || jobDescription.trim().length < 50) {
+        throw new Error('Job description is required. Please ensure the job posting has a valid description.');
+      }
+      
+      // Step 2: Get top skills from analysis if available
       const topSkills = analysis?.skills 
         ? [...(analysis.skills.core || []), ...(analysis.skills.adjacent || [])].slice(0, 5)
         : [];
       
+      // Step 3: Call tailor API with full description
       const tailorResponse = await tailor(
-        resumeText || '', 
+        actualResumeText, // Use the resolved resume text
         job.title, 
         job.company, 
-        job.description_snippet || ''
+        jobDescription, // Use fetched full description
+        false, // emphasizeMetrics
+        currentUser?.uid || null // user_id from Firebase Auth
       );
       setTailor(tailorResponse);
       setCurrentTailor(tailorResponse);
-      setTailorOpen(true);
       
       track('tailor_success', {
         jobId: job.id,
@@ -205,14 +290,29 @@ export const Jobs = () => {
       });
     } catch (error) {
       const errorName = error instanceof Error ? error.name : 'UnknownError';
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
       track('tailor_failure', {
         jobId: job.id,
         jobMatch: job.matchScore,
         errorName,
-        errorMessage: error instanceof Error ? error.message : String(error),
+        errorMessage,
       });
-      toast.error('Failed to tailor resume');
-      console.error(error);
+      
+      // Show user-friendly error
+      if (errorMessage.includes('timeout') || errorMessage.includes('90 seconds')) {
+        toast.error('Request timed out. Please try again or check your connection.');
+      } else if (errorMessage.includes('Resume text is required')) {
+        toast.error('Resume text is required. Please upload your resume first on the Home page.');
+      } else if (errorMessage.includes('Job description is required')) {
+        toast.error('Job description is missing. Please try a different job posting.');
+      } else {
+        toast.error('Failed to tailor resume. Please try again.');
+      }
+      console.error('[Tailor] Error:', error);
+      
+      // Close modal on error
+      setTailorOpen(false);
     } finally {
       setTailorLoading(false);
     }
@@ -245,50 +345,54 @@ export const Jobs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Enhanced Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="h-1 w-12 bg-gradient-to-r from-primary to-primary/50 rounded-full"></div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Job Opportunities
-            </h1>
-          </div>
-          <p className="text-muted-foreground text-lg">AI-powered job matching tailored to your resume</p>
-        </div>
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <div className="max-w-[1100px] mx-auto px-6 py-20 md:py-32">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 text-center"
+        >
+          <h1 className="text-[42px] md:text-[56px] font-semibold text-[#0F172A] mb-6 leading-tight">Job Opportunities</h1>
+          <p className="text-lg md:text-xl text-[#64748B] font-normal leading-relaxed">AI-powered job matching tailored to your resume</p>
+        </motion.div>
         
         {/* Health check banner */}
         {getHealthBanner()}
 
         {/* Filters */}
-        <Card className="mb-6 border-2 shadow-lg">
-          <CardHeader>
-            <CardTitle>Search Filters</CardTitle>
-            <CardDescription>Enter your job search criteria</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="role">Job Role *</Label>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200 mb-6"
+        >
+          <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Search Filters</h2>
+          <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Enter your job search criteria</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div>
+                <Label htmlFor="role" className="text-sm font-medium text-[#0F172A] mb-2 block">Job Role *</Label>
                 <Input
                   id="role"
                   placeholder="e.g., AI Engineer"
                   value={filters.role}
                   onChange={(e) => setFilters(prev => ({ ...prev, role: e.target.value }))}
+                  className="border-[#E5E7EB] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                 />
               </div>
               <div>
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location" className="text-sm font-medium text-[#0F172A] mb-2 block">Location</Label>
                 <Input
                   id="location"
                   placeholder="e.g., United States"
                   value={filters.location}
                   onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                  className="border-[#E5E7EB] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                 />
               </div>
               <div>
-                <Label htmlFor="radius">Radius (miles)</Label>
+                <Label htmlFor="radius" className="text-sm font-medium text-[#0F172A] mb-2 block">Radius (miles)</Label>
                 <Input
                   id="radius"
                   type="number"
@@ -296,6 +400,7 @@ export const Jobs = () => {
                   max="125"
                   value={filters.radius_miles}
                   onChange={(e) => setFilters(prev => ({ ...prev, radius_miles: parseInt(e.target.value) || 25 }))}
+                  className="border-[#E5E7EB] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                 />
               </div>
               <div className="flex items-end">
@@ -304,92 +409,94 @@ export const Jobs = () => {
                     id="remote"
                     checked={filters.remote}
                     onCheckedChange={(checked) => setFilters(prev => ({ ...prev, remote: checked === true }))}
+                    className="border-[#E5E7EB]"
                   />
-                  <Label htmlFor="remote" className="cursor-pointer">Remote only</Label>
+                  <Label htmlFor="remote" className="text-sm font-medium text-[#0F172A] cursor-pointer">Remote only</Label>
                 </div>
               </div>
             </div>
-            <div className="mt-4">
-              <Button 
-                onClick={() => handleSearch(null)} 
-                disabled={loading || !filters.role}
-                size="lg"
-                className="w-full md:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-5 w-5 mr-2" />
-                    Find Matching Jobs
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            <Button 
+              onClick={() => handleSearch(null)} 
+              disabled={loading || !filters.role}
+              size="lg"
+              className="w-full md:w-auto bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg font-medium transition-all duration-200 hover:scale-[1.02]"
+            >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              <>
+                <Search className="h-5 w-5 mr-2" />
+                Find Matching Jobs
+              </>
+            )}
+          </Button>
+        </motion.div>
 
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <Skeleton className="h-6 w-48 mb-2" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                  <Skeleton className="h-6 w-20" />
+            <div key={i} className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB]">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <Skeleton className="h-6 w-48 mb-2" />
+                  <Skeleton className="h-4 w-32" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Skeleton className="h-4 w-32 mb-2" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
-                    </div>
-                  </div>
-                  <div>
-                    <Skeleton className="h-4 w-32 mb-2" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
-                    </div>
+                <Skeleton className="h-6 w-20" />
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Skeleton className="h-4 w-32 mb-2" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
                   </div>
                 </div>
-              </CardContent>
-              <CardContent>
-                <div className="flex gap-2">
-                  <Skeleton className="h-9 w-24" />
-                  <Skeleton className="h-9 w-40" />
+                <div>
+                  <Skeleton className="h-4 w-32 mb-2" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Skeleton className="h-9 w-24" />
+                <Skeleton className="h-9 w-40" />
+              </div>
+            </div>
           ))}
         </div>
       ) : linkedInJobs.length === 0 && !loading ? (
-        <Card className="border-2 shadow-lg">
-          <CardContent className="py-16 text-center">
-            <div className="mb-6">
-              <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-                <Sparkles className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Ready to find your next opportunity?</h3>
-              <p className="text-muted-foreground mb-6">
-                Enter your job search criteria above and click "Find Matching Jobs"
-              </p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white rounded-[16px] p-16 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] text-center"
+        >
+          <div className="mb-6">
+            <div className="mx-auto h-16 w-16 rounded-full bg-[#F9FAFB] flex items-center justify-center mb-4">
+              <Sparkles className="h-8 w-8 text-[#64748B]" />
             </div>
-          </CardContent>
-        </Card>
+            <h3 className="text-xl font-semibold text-[#0F172A] mb-2">Ready to find your next opportunity?</h3>
+            <p className="text-[#64748B] mb-6 font-normal">
+              Enter your job search criteria above and click "Find Matching Jobs"
+            </p>
+          </div>
+        </motion.div>
       ) : linkedInJobs.length > 0 ? (
         <div className="space-y-4">
-          {linkedInJobs.map((job) => (
-            <LinkedInJobCard key={job.id} job={job} onTailor={handleTailor} />
+          {linkedInJobs.map((job, idx) => (
+            <motion.div
+              key={job.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: idx * 0.05 }}
+            >
+              <LinkedInJobCard job={job} onTailor={handleTailor} />
+            </motion.div>
           ))}
           {nextCursor && (
             <div className="flex justify-center pt-4">
@@ -398,7 +505,7 @@ export const Jobs = () => {
                 disabled={loadingMore}
                 variant="outline"
                 size="lg"
-                className="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10"
+                className="border-[#E5E7EB] rounded-lg !bg-white hover:!bg-[#F9FAFB] hover:!border-[#2563EB] hover:!text-[#0F172A] transition-all duration-200 hover:scale-[1.02]"
               >
                 {loadingMore ? (
                   <>
@@ -406,37 +513,42 @@ export const Jobs = () => {
                     Loading more...
                   </>
                 ) : (
-                  <>
-                    Load More Jobs
-                  </>
+                  'Load More Jobs'
                 )}
               </Button>
             </div>
           )}
         </div>
       ) : (
-        <Card className="border-2 shadow-lg">
-          <CardContent className="py-16 text-center">
-            <div className="mb-6">
-              <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-                <Sparkles className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
-              <p className="text-muted-foreground mb-6">
-                Try adjusting your search criteria and click "Find Matching Jobs" to search again.
-              </p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white rounded-[16px] p-16 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] text-center"
+        >
+          <div className="mb-6">
+            <div className="mx-auto h-16 w-16 rounded-full bg-[#F9FAFB] flex items-center justify-center mb-4">
+              <Sparkles className="h-8 w-8 text-[#64748B]" />
             </div>
-          </CardContent>
-        </Card>
+            <h3 className="text-xl font-semibold text-[#0F172A] mb-2">No jobs found</h3>
+            <p className="text-[#64748B] mb-6 font-normal">
+              Try adjusting your search criteria and click "Find Matching Jobs" to search again.
+            </p>
+          </div>
+        </motion.div>
       )}
 
-        {currentTailor && (
-          <TailorModal
-            open={tailorOpen}
-            onOpenChange={setTailorOpen}
-            tailor={currentTailor}
-          />
-        )}
+      {currentTailor && selectedJob && (
+        <TailorModal
+          open={tailorOpen}
+          onOpenChange={setTailorOpen}
+          tailor={currentTailor}
+          jobTitle={selectedJob.title}
+          company={selectedJob.company}
+          jobDescription={selectedJob.description_snippet || ''}
+          onRegenerate={handleTailorRegenerate}
+        />
+      )}
       </div>
     </div>
   );

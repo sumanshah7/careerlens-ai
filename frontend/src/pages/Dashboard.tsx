@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { getPrediction } from '../lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { TrendingUp, FileText } from 'lucide-react';
+import { TrendingUp, FileText, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export const Dashboard = () => {
   const { analysis, jobs, coach, getAllRoles, resumes, currentRole } = useAppStore();
@@ -44,194 +44,182 @@ export const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="h-1 w-12 bg-gradient-to-r from-primary to-primary/50 rounded-full"></div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Dashboard
-            </h1>
-          </div>
-          <p className="text-muted-foreground text-lg">Your career progress at a glance</p>
-        </div>
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <div className="max-w-[1100px] mx-auto px-6 py-20 md:py-32">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 text-center"
+        >
+          <h1 className="text-[42px] md:text-[56px] font-semibold text-[#0F172A] mb-6 leading-tight">Dashboard</h1>
+          <p className="text-lg md:text-xl text-[#64748B] font-normal leading-relaxed">Your career progress at a glance</p>
+        </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-primary/5 to-transparent">
-          <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent rounded-t-lg">
-            <CardTitle className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
-              Current Score
-            </CardTitle>
-            <CardDescription>Your latest career readiness</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="text-5xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              {analysis?.score ?? (analysis?.domains?.[0] ? Math.round(analysis.domains[0].score * 100) : 'N/A')}
-            </div>
-            {analysis && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Based on your resume analysis
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-blue-500/5 to-transparent">
-          <CardHeader className="bg-gradient-to-r from-blue-500/10 to-transparent rounded-t-lg">
-            <CardTitle className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-              Jobs Found
-            </CardTitle>
-            <CardDescription>Matching opportunities</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-              {jobs.length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Tailored to your profile
-            </p>
-          </CardContent>
-        </Card>
-
-            <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-br from-purple-500/5 to-transparent">
-              <CardHeader className="bg-gradient-to-r from-purple-500/10 to-transparent rounded-t-lg">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-purple-500"></div>
-                  Plan Days
-                </CardTitle>
-                <CardDescription>Your learning journey</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                  {coach?.plan.length ?? 0}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Personalized coaching plan
-                </p>
-              </CardContent>
-            </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+        >
+          <h2 className="text-sm font-medium text-[#64748B] mb-2">Current Score</h2>
+          <p className="text-xs text-[#64748B] mb-4 font-normal">Your latest career readiness</p>
+          <div className="text-5xl font-semibold text-[#0F172A]">
+            {analysis?.score ?? (analysis?.domains?.[0] ? Math.round(analysis.domains[0].score * 100) : 'N/A')}
           </div>
+          {analysis && (
+            <p className="text-xs text-[#64748B] mt-2 font-normal">
+              Based on your resume analysis
+            </p>
+          )}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+        >
+          <h2 className="text-sm font-medium text-[#64748B] mb-2">Jobs Found</h2>
+          <p className="text-xs text-[#64748B] mb-4 font-normal">Matching opportunities</p>
+          <div className="text-5xl font-semibold text-[#0F172A]">
+            {jobs.length}
+          </div>
+          <p className="text-xs text-[#64748B] mt-2 font-normal">
+            Tailored to your profile
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+        >
+          <h2 className="text-sm font-medium text-[#64748B] mb-2">Plan Days</h2>
+          <p className="text-xs text-[#64748B] mb-4 font-normal">Your learning journey</p>
+          <div className="text-5xl font-semibold text-[#0F172A]">
+            {coach?.plan?.length ?? 0}
+          </div>
+          <p className="text-xs text-[#64748B] mt-2 font-normal">
+            Personalized coaching plan
+          </p>
+        </motion.div>
+      </div>
 
           {/* Resume Management Section */}
           {roles.length > 0 && (
-            <Card className="border-2 shadow-lg mb-6 bg-gradient-to-br from-indigo-500/5 to-transparent">
-              <CardHeader className="bg-gradient-to-r from-indigo-500/10 to-transparent rounded-t-lg">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-indigo-600" />
-                  Your Resumes
-                </CardTitle>
-                <CardDescription>Manage resumes for different roles</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-3">
-                  {roles.map((role) => {
-                    const resume = resumes.find(r => r.role === role);
-                    return (
-                      <div key={role} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-indigo-500/20">
-                        <div className="flex-1">
-                          <div className="font-medium">{role}</div>
-                          {resume && (
-                            <div className="text-sm text-muted-foreground">
-                              Score: {resume.analysis.score || Math.round((resume.analysis.domains?.[0]?.score || 0.5) * 100)} • Updated: {new Date(resume.updatedAt).toLocaleDateString()}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <Link to="/progress">
-                            <Button variant="outline" size="sm">
-                              <TrendingUp className="h-4 w-4 mr-2" />
-                              View Progress
-                            </Button>
-                          </Link>
-                        </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200 mb-6"
+            >
+              <h2 className="text-2xl font-semibold text-[#0F172A] mb-3 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-[#64748B]" />
+                Your Resumes
+              </h2>
+              <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Manage resumes for different roles</p>
+              <div className="space-y-3">
+                {roles.map((role) => {
+                  const resume = resumes.find(r => r.role === role);
+                  return (
+                    <div key={role} className="flex items-center justify-between p-3 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] hover:bg-white transition-colors">
+                      <div className="flex-1">
+                        <div className="font-medium text-[#0F172A]">{role}</div>
+                        {resume && (
+                          <div className="text-sm text-[#64748B] font-normal">
+                            Score: {resume.analysis.score || Math.round((resume.analysis.domains?.[0]?.score || 0.5) * 100)} • Updated: {new Date(resume.updatedAt).toLocaleDateString()}
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
+                      <div className="flex gap-2">
+                        <Link to="/progress">
+                          <Button variant="outline" size="sm" className="border-[#E5E7EB] rounded-lg !bg-white hover:!bg-[#F9FAFB] hover:!border-[#2563EB] hover:!text-[#0F172A] transition-all duration-200 hover:scale-[1.02]">
+                            <TrendingUp className="h-4 w-4 mr-2" />
+                            View Progress
+                            <ChevronRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {currentRole && (
+                <div className="mt-4 p-3 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB]">
+                  <p className="text-sm text-[#64748B] font-normal">
+                    Current role: <span className="font-medium text-[#0F172A]">{currentRole}</span>
+                  </p>
                 </div>
-                {currentRole && (
-                  <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                    <p className="text-sm text-muted-foreground">
-                      Current role: <span className="font-medium text-foreground">{currentRole}</span>
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              )}
+            </motion.div>
           )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-indigo-500/10 to-transparent rounded-t-lg">
-            <CardTitle className="flex items-center gap-2">
-              <svg className="h-5 w-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              Score Over Time
-            </CardTitle>
-            <CardDescription>Your progress trajectory</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={scoreData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="date" stroke="#6b7280" />
-                <YAxis domain={[0, 100]} stroke="#6b7280" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px'
-                  }} 
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#6366f1"
-                  strokeWidth={3}
-                  dot={{ fill: '#6366f1', r: 5 }}
-                  activeDot={{ r: 7 }}
-                  name="Career Score"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+        >
+          <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Score Over Time</h2>
+          <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Your progress trajectory</p>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={scoreData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+              <XAxis dataKey="date" stroke="#64748B" />
+              <YAxis domain={[0, 100]} stroke="#64748B" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px'
+                }} 
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="#2563EB"
+                strokeWidth={2}
+                dot={{ fill: '#2563EB', r: 4 }}
+                activeDot={{ r: 6 }}
+                name="Career Score"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
 
         {prediction && (
-          <Card className="border-2 shadow-lg bg-gradient-to-br from-green-500/5 to-transparent">
-            <CardHeader className="bg-gradient-to-r from-green-500/10 to-transparent rounded-t-lg">
-              <CardTitle className="flex items-center gap-2">
-                <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                Growth Prediction
-              </CardTitle>
-              <CardDescription>Expected improvement after plan</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-6">
-                <div className="p-4 rounded-lg bg-muted/50 border border-muted">
-                  <div className="text-sm text-muted-foreground mb-2">Current Baseline</div>
-                  <div className="text-3xl font-bold">{prediction.baseline}</div>
-                </div>
-                <div className="p-4 rounded-lg bg-gradient-to-r from-green-500/10 to-green-500/5 border border-green-500/20">
-                  <div className="text-sm text-muted-foreground mb-2">After Plan</div>
-                  <div className="text-3xl font-bold text-green-600">
-                    {prediction.afterPlan}
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-500/5 border border-blue-500/20">
-                  <div className="text-sm text-muted-foreground mb-2">Expected Improvement</div>
-                  <div className="text-3xl font-bold text-blue-600">
-                    +{prediction.delta.toFixed(1)}
-                  </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+        >
+          <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Growth Prediction</h2>
+          <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">Expected improvement after plan</p>
+          <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB]">
+                <div className="text-sm text-[#64748B] mb-2 font-normal">Current Baseline</div>
+                <div className="text-3xl font-semibold text-[#0F172A]">{prediction.baseline}</div>
+              </div>
+              <div className="p-4 rounded-lg bg-[#f0fdf4] border border-[#86efac]">
+                <div className="text-sm text-[#64748B] mb-2 font-normal">After Plan</div>
+                <div className="text-3xl font-semibold text-[#16A34A]">
+                  {prediction.afterPlan}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-4 rounded-lg bg-[#eff6ff] border border-[#93c5fd]">
+                <div className="text-sm text-[#64748B] mb-2 font-normal">Expected Improvement</div>
+                <div className="text-3xl font-semibold text-[#2563EB]">
+                  +{prediction.delta.toFixed(1)}
+                </div>
+              </div>
+            </div>
+          </motion.div>
         )}
       </div>
       </div>

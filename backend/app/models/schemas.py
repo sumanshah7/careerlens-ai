@@ -83,6 +83,11 @@ class TailorResponse(BaseModel):
     bullets: List[str]
     pitch: str
     coverLetter: str
+    evidenceUsed: List[str] = Field(default_factory=list, description="Resume evidence tokens used in the content")
+    isEvidenceOnly: bool = Field(default=False, description="True if this is an evidence-only draft (fallback)")
+    validationWarnings: List[str] = Field(default_factory=list, description="Warnings from validation (e.g., clichés removed)")
+    doc_id: str | None = Field(default=None, description="Firestore document ID if saved")
+    pointsToInclude: List[str] = Field(default_factory=list, description="Suggested points to add to resume based on job requirements")
 
 
 class CoachPlan(BaseModel):

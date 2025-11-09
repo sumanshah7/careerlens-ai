@@ -56,8 +56,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!auth) {
       throw new Error('Firebase is not configured. Please add Firebase config to .env file.');
     }
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth as FirebaseAuth, provider);
+    try {
+      const provider = new GoogleAuthProvider();
+      // Add additional scopes if needed
+      provider.addScope('profile');
+      provider.addScope('email');
+      
+      // Use popup instead of redirect to avoid sessionStorage issues
+      const result = await signInWithPopup(auth as FirebaseAuth, provider);
+      return result;
+    } catch (error: any) {
+      // Handle specific Firebase Auth errors
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('Popup was blocked by your browser. Please allow popups for this site and try again.');
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in was cancelled. Please try again.');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        throw new Error('Another sign-in request is already in progress. Please wait.');
+      } else if (error.message?.includes('sessionStorage') || error.message?.includes('initial state')) {
+        // Clear any stale auth state and retry
+        console.warn('SessionStorage issue detected, clearing auth state...');
+        await firebaseSignOut(auth as FirebaseAuth);
+        throw new Error('Authentication session expired. Please try signing in again.');
+      }
+      throw error;
+    }
   };
 
   const signOut = async () => {

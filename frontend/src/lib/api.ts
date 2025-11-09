@@ -3,7 +3,7 @@ import { track } from './analytics';
 
 // Get API base URL from environment
 const getApiBaseUrl = (): string => {
-  return import.meta.env.VITE_API_BASE_URL || import.meta.env.API_BASE_URL || 'http://localhost:8000';
+  return import.meta.env.VITE_API_BASE_URL || import.meta.env.API_BASE_URL || 'http://localhost:8001';
 };
 
 // Mock data generators (fallback)
@@ -273,35 +273,161 @@ export const tailor = async (
   jobTitle: string,
   company: string,
   jobDescription: string,
+  emphasizeMetrics: boolean = false,
+  userId?: string | null,
   signal?: AbortSignal
 ): Promise<TailorResponse> => {
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}/api/tailor`;
   
-  return fetchWithFallback<TailorResponse>(
-    url,
-    {
+  // Create timeout controller (90 seconds max)
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), 90000); // 90 seconds
+  
+  // Combine signals
+  const combinedSignal = signal 
+    ? (() => {
+        const combined = new AbortController();
+        signal.addEventListener('abort', () => combined.abort());
+        timeoutController.signal.addEventListener('abort', () => combined.abort());
+        return combined.signal;
+      })()
+    : timeoutController.signal;
+  
+  try {
+    const result = await fetchWithFallback<TailorResponse>(
+      url,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          resume_text: resumeText,
+          job_title: jobTitle,
+          company: company,
+          job_description: jobDescription,
+          emphasize_metrics: emphasizeMetrics,
+          user_id: userId || null
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        signal: combinedSignal,
+      },
+      {
+        bullets: [],
+        pitch: '',
+        coverLetter: '',
+        evidenceUsed: [],
+        isEvidenceOnly: false,
+        validationWarnings: [],
+        doc_id: null,
+        pointsToInclude: []
+      },
+      'tailor_resume',
+      { jobTitle, company, emphasizeMetrics }
+    );
+    clearTimeout(timeoutId);
+    return result;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError' && timeoutController.signal.aborted) {
+      throw new Error('Request timed out after 90 seconds. Please try again.');
+    }
+    throw error;
+  }
+};
+
+export const fetchJobDescription = async (
+  jobUrl: string,
+  signal?: AbortSignal
+): Promise<{ description: string; success: boolean; source: string }> => {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/jobs/fetch-description`;
+  
+  try {
+    const response = await fetch(url, {
       method: 'POST',
-      body: JSON.stringify({
-        resume_text: resumeText,
-        job_title: jobTitle,
-        company: company,
-        job_description: jobDescription
-      }),
+      body: JSON.stringify({ url: jobUrl }),
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
       },
       signal,
-    },
-    {
-      bullets: [],
-      pitch: '',
-      coverLetter: ''
-    },
-    'tailor_resume',
-    { jobTitle, company }
-  );
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[fetchJobDescription] HTTP ${response.status}: ${errorText}`);
+      throw new Error(`Failed to fetch job description: ${response.status} ${errorText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request cancelled');
+    }
+    console.error('[fetchJobDescription] Error:', error);
+    throw error;
+  }
+};
+
+export const downloadCoverLetterPDF = async (
+  docId: string | null,
+  coverLetter?: string,
+  jobTitle?: string,
+  company?: string,
+  userName?: string,
+  userEmail?: string
+): Promise<void> => {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/pdf/cover-letter`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        doc_id: docId,
+        cover_letter: coverLetter,
+        job_title: jobTitle,
+        company: company,
+        user_name: userName,
+        user_email: userEmail
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to generate PDF: ${response.statusText}`);
+    }
+    
+    // Get blob and create download link
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    
+    // Get filename from Content-Disposition header or use default
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'cover_letter.pdf';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+    
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('[PDF] Error downloading PDF:', error);
+    throw error;
+  }
 };
 
 export const generatePlan = async (

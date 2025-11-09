@@ -1,233 +1,261 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { BarChart3, Briefcase, BookOpen, Target, Zap, Shield } from 'lucide-react';
+import { Logo } from '../components/Logo';
+import { motion } from 'framer-motion';
+import { Upload, BarChart3, Briefcase, FileCheck, ArrowRight } from 'lucide-react';
 
 export const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-muted/20">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
-          <div className="mb-6">
-            <div className="inline-block mb-4">
-              <div className="h-2 w-24 bg-gradient-to-r from-primary to-primary/50 rounded-full mx-auto mb-2"></div>
+    <div className="min-h-screen bg-[#F9FAFB]">
+      {/* Subtle radial tint behind hero (very subtle) */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,0,0,0.02)_0%,transparent_50%)] pointer-events-none" />
+      
+      {/* Minimal Navbar for Landing */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-[#E5E7EB]">
+        <div className="max-w-[1100px] mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
+            <Logo />
+            <div className="flex items-center gap-4">
+              <Link to="/login">
+                <Button variant="ghost" className="text-[#64748B] hover:text-[#0F172A] hover:bg-transparent">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button className="bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg font-medium transition-colors duration-200">
+                  Get Started
+                </Button>
+              </Link>
             </div>
-            <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent animate-pulse">
+          </div>
+        </div>
+      </nav>
+
+      <main className="relative">
+        {/* Hero Section */}
+        <section className="max-w-[1100px] mx-auto px-6 py-20 md:py-32">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <h1 className="text-[42px] md:text-[56px] font-semibold text-[#0F172A] mb-6 leading-tight">
               CareerLens AI
             </h1>
-            <div className="h-2 w-24 bg-gradient-to-r from-primary/50 to-primary rounded-full mx-auto"></div>
+            <p className="text-lg md:text-xl text-[#64748B] mb-10 max-w-2xl mx-auto font-normal leading-relaxed">
+              Your personal career copilot. Analyze your resume, match roles, and grow with a focused plan.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+              <Link to="/login">
+                <Button 
+                  size="lg" 
+                  className="bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg font-medium transition-all duration-200 hover:scale-[1.02] px-8 py-6 text-base"
+                >
+                  Get Started
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-[#E5E7EB] text-[#0F172A] !bg-white hover:!bg-[#F9FAFB] hover:!border-[#2563EB] hover:!text-[#0F172A] rounded-lg font-medium transition-all duration-200 hover:scale-[1.02] px-8 py-6 text-base"
+                >
+                  Sign In
+                </Button>
+              </Link>
+            </div>
+            <p className="text-sm text-[#64748B] font-medium">
+              Private by design · No resume text sent to analytics
+            </p>
+          </motion.div>
+        </section>
+
+        {/* Feature Trio */}
+        <section className="max-w-[1100px] mx-auto px-6 py-16 md:py-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+            >
+              <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Resume Analysis</h2>
+              <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">
+                Evidence-based insights from your resume
+              </p>
+              <ul className="space-y-3 text-sm text-[#64748B] font-normal">
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Score, strengths, gaps, role hints</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Domain classification with confidence</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Skill extraction and mapping</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Recommended roles tailored to you</span>
+                </li>
+              </ul>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+            >
+              <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Smart Job Matching</h2>
+              <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">
+                Open roles that fit your skills
+              </p>
+              <ul className="space-y-3 text-sm text-[#64748B] font-normal">
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Matches by skills, clear reasons</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Real-time job search from multiple sources</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Match score with gap analysis</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Why you fit & how to improve</span>
+                </li>
+              </ul>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="bg-white rounded-[16px] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E7EB] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] transition-all duration-200"
+            >
+              <h2 className="text-2xl font-semibold text-[#0F172A] mb-3">Personalized Coaching</h2>
+              <p className="text-sm text-[#64748B] mb-6 font-normal leading-relaxed">
+                A 7-day plan to close gaps
+              </p>
+              <ul className="space-y-3 text-sm text-[#64748B] font-normal">
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>7-day plan, real resources</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>DataCamp, Udemy, Coursera links</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Daily tasks with deliverables</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#64748B] flex-shrink-0" />
+                  <span>Track progress and improvements</span>
+                </li>
+              </ul>
+            </motion.div>
           </div>
-          <p className="text-2xl text-muted-foreground mb-4 max-w-3xl mx-auto font-medium">
-            Your AI-powered career companion
-          </p>
-          <p className="text-lg text-muted-foreground/80 mb-10 max-w-2xl mx-auto">
-            Analyze your resume, find matching jobs, tailor your applications, 
-            and get personalized coaching to advance your career.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link to="/login">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all text-lg px-8 py-6">
-                Get Started
-              </Button>
-            </Link>
-            <Link to="/login">
-              <Button size="lg" variant="outline" className="border-2 text-lg px-8 py-6 hover:bg-primary/5 transition-all">
-                Sign In
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-card to-card/50 hover:border-primary/30">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent rounded-t-lg border-b">
-              <div className="bg-primary/10 rounded-full w-14 h-14 flex items-center justify-center mb-3">
-                <BarChart3 className="h-7 w-7 text-primary" />
-              </div>
-              <CardTitle className="text-xl">AI Resume Analysis</CardTitle>
-              <CardDescription className="text-base">
-                Get instant feedback on your resume with AI-powered analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
-                  <span className="text-foreground">Career readiness score</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
-                  <span className="text-foreground">Strengths and weaknesses</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
-                  <span className="text-foreground">Skill gap analysis</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
-                  <span className="text-foreground">Role recommendations</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-card to-card/50 hover:border-primary/30">
-            <CardHeader className="bg-gradient-to-r from-blue-500/5 to-transparent rounded-t-lg border-b">
-              <div className="bg-blue-500/10 rounded-full w-14 h-14 flex items-center justify-center mb-3">
-                <Briefcase className="h-7 w-7 text-blue-600" />
-              </div>
-              <CardTitle className="text-xl">Smart Job Matching</CardTitle>
-              <CardDescription className="text-base">
-                Find jobs that match your profile with AI-powered matching
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
-                  <span className="text-foreground">Real-time job search</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
-                  <span className="text-foreground">Match score calculation</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
-                  <span className="text-foreground">Personalized recommendations</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
-                  <span className="text-foreground">Why you fit & how to improve</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-card to-card/50 hover:border-primary/30">
-            <CardHeader className="bg-gradient-to-r from-purple-500/5 to-transparent rounded-t-lg border-b">
-              <div className="bg-purple-500/10 rounded-full w-14 h-14 flex items-center justify-center mb-3">
-                <BookOpen className="h-7 w-7 text-purple-600" />
-              </div>
-              <CardTitle className="text-xl">Personalized Coaching</CardTitle>
-              <CardDescription className="text-base">
-                Get a 7-day personalized plan to close your skill gaps
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
-                  <span className="text-foreground">7-day learning plan</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
-                  <span className="text-foreground">Real course links</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
-                  <span className="text-foreground">DataCamp, Udemy, Coursera</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
-                  <span className="text-foreground">Daily reminders</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+        </section>
 
         {/* How It Works */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-8">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">1</span>
-              </div>
-              <h3 className="font-semibold mb-2">Upload Resume</h3>
-              <p className="text-sm text-muted-foreground">
-                Upload your resume (PDF or text) for AI analysis
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">2</span>
-              </div>
-              <h3 className="font-semibold mb-2">Get Analysis</h3>
-              <p className="text-sm text-muted-foreground">
-                Receive instant feedback on your career readiness
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">3</span>
-              </div>
-              <h3 className="font-semibold mb-2">Find Jobs</h3>
-              <p className="text-sm text-muted-foreground">
-                Discover matching opportunities with AI-powered search
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">4</span>
-              </div>
-              <h3 className="font-semibold mb-2">Tailor & Apply</h3>
-              <p className="text-sm text-muted-foreground">
-                Get tailored resumes and cover letters for each job
-              </p>
-            </div>
+        <section className="max-w-[1100px] mx-auto px-6 py-16 md:py-24">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-3xl font-semibold text-[#0F172A] text-center mb-12"
+          >
+            How it works
+          </motion.h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { icon: Upload, title: 'Upload', desc: 'Paste text or upload a PDF' },
+              { icon: BarChart3, title: 'Analyze', desc: 'See strengths and gaps' },
+              { icon: Briefcase, title: 'Find Jobs', desc: 'Matches that fit your skills' },
+              { icon: FileCheck, title: 'Tailor & Apply', desc: 'Bullets and cover letters' },
+            ].map((step, idx) => (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 + idx * 0.1 }}
+                className="text-center"
+              >
+                <div className="mb-4 flex justify-center">
+                  <div className="w-12 h-12 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center">
+                    <step.icon className="h-6 w-6 text-[#64748B]" />
+                  </div>
+                </div>
+                <h3 className="font-semibold text-[#0F172A] mb-2">{step.title}</h3>
+                <p className="text-sm text-[#64748B] font-normal">{step.desc}</p>
+              </motion.div>
+            ))}
           </div>
-        </div>
+        </section>
 
-        {/* Benefits */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          <div className="flex items-start gap-4">
-            <Zap className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-semibold mb-2">AI-Powered</h3>
-              <p className="text-sm text-muted-foreground">
-                Uses Claude AI and GPT for intelligent analysis and tailoring
+        {/* Privacy Band */}
+        <section className="bg-[#F9FAFB] border-y border-[#E5E7EB] py-8">
+          <div className="max-w-[1100px] mx-auto px-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-base font-medium text-[#0F172A]">Privacy-first by design</p>
+              <p className="text-sm text-[#64748B] font-normal">
+                We hash your resume and never send PII to analytics
               </p>
             </div>
           </div>
-          <div className="flex items-start gap-4">
-            <Target className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-semibold mb-2">Personalized</h3>
-              <p className="text-sm text-muted-foreground">
-                Tailored recommendations based on your unique profile
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-4">
-            <Shield className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-semibold mb-2">Secure</h3>
-              <p className="text-sm text-muted-foreground">
-                Your data is secure and never shared with third parties
-              </p>
-            </div>
-          </div>
-        </div>
+        </section>
 
-        {/* CTA */}
-        <div className="text-center">
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="pt-6">
-              <h2 className="text-2xl font-bold mb-4">Ready to Advance Your Career?</h2>
-              <p className="text-muted-foreground mb-6">
-                Join thousands of professionals using AI to land their dream jobs
-              </p>
-              <Link to="/login">
-                <Button size="lg">Get Started Free</Button>
-              </Link>
-            </CardContent>
-          </Card>
+        {/* Final CTA */}
+        <section className="max-w-[1100px] mx-auto px-6 py-20 md:py-32">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="text-center"
+          >
+            <h2 className="text-3xl md:text-4xl font-semibold text-[#0F172A] mb-4">
+              Ready to advance your career?
+            </h2>
+            <p className="text-lg text-[#64748B] mb-8 font-normal">
+              Start with a quick analysis—free and private
+            </p>
+            <Link to="/login">
+              <Button 
+                size="lg" 
+                className="bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg font-medium transition-all duration-200 hover:scale-[1.02] px-8 py-6 text-base inline-flex items-center gap-2"
+              >
+                Analyze my resume
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+            </Link>
+          </motion.div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-[#E5E7EB] py-6">
+        <div className="max-w-[1100px] mx-auto px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-[#64748B] font-normal">
+              © {new Date().getFullYear()} CareerLens AI
+            </p>
+            <div className="flex items-center gap-6 text-sm text-[#64748B] font-normal">
+              <a href="#" className="hover:text-[#0F172A] transition-colors">Docs</a>
+              <a href="#" className="hover:text-[#0F172A] transition-colors">Privacy</a>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#0F172A] transition-colors">GitHub</a>
+            </div>
+          </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };
-
