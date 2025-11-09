@@ -385,6 +385,15 @@ export const Analysis = () => {
                 </svg>
                 Areas for Growth
               </CardTitle>
+              <CardDescription className="mt-2">
+                {currentRole ? (
+                  <>
+                    Skills to develop for <span className="font-semibold text-amber-600 dark:text-amber-400">{currentRole}</span> role
+                  </>
+                ) : (
+                  "Skills to develop based on your resume analysis"
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
