@@ -384,6 +384,44 @@ export const autoCoach = async (
   );
 };
 
+export const getRoleMatchScore = async (
+  resumeText: string,
+  targetRole: string | null,
+  signal?: AbortSignal
+): Promise<{ score: number; debug: { hash: string; provider: string } }> => {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/predictScore`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        resume_text: resumeText,
+        target_role: targetRole || null,
+      }),
+      signal,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    track('role_match_score_fetched', {
+      score: data.score,
+      has_target_role: !!targetRole,
+    });
+    return data;
+  } catch (error) {
+    console.error('❌ Failed to fetch role match score:', error);
+    // Return a default score if API fails
+    return { score: 0, debug: { hash: 'error', provider: 'fallback' } };
+  }
+};
+
 export const getPrediction = async (
   skillsHave: string[],
   skillsGap: string[],
