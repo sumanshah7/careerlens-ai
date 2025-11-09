@@ -754,7 +754,30 @@ async def analyze_resume(
             target_role = request.target_roles[0]
             print(f"[Analyze] Using target_roles[0] from request: {target_role}")
         
-        print(f"[Analyze] Final target_role: {target_role}, hash={debug_hash}")
+        # PRE-VALIDATION: Check if target_role matches resume content BEFORE calling LLM
+        # If target_role doesn't match, ignore it completely
+        resume_lower = resume_text.lower()
+        original_target_role = target_role
+        if target_role:
+            target_role_lower = target_role.lower()
+            
+            # Check if target_role is AI/ML but resume has Animation keywords
+            if ("ai engineer" in target_role_lower or "ml engineer" in target_role_lower or "machine learning" in target_role_lower):
+                ai_ml_keywords = ["machine learning", "ml", "ai", "pytorch", "tensorflow", "sklearn", "neural network", "deep learning", "llm", "transformer"]
+                animation_keywords = ["animation", "motion graphics", "after effects", "maya", "blender", "character design", "storyboarding", "3d animation", "2d animation", "motion design", "unreal engine", "godot", "motion capture", "mocap"]
+                
+                has_ai_ml = any(keyword in resume_lower for keyword in ai_ml_keywords)
+                has_animation = any(keyword in resume_lower for keyword in animation_keywords)
+                
+                # If resume has Animation keywords but NOT AI/ML keywords, ignore target_role
+                if has_animation and not has_ai_ml:
+                    print(f"[Analyze] WARNING: target_role '{target_role}' doesn't match resume (has Animation keywords, no AI/ML keywords). Ignoring target_role, hash={debug_hash}")
+                    target_role = None  # Ignore target_role completely
+                elif not has_ai_ml:
+                    print(f"[Analyze] WARNING: target_role '{target_role}' doesn't match resume (no AI/ML keywords found). Ignoring target_role, hash={debug_hash}")
+                    target_role = None  # Ignore target_role completely
+        
+        print(f"[Analyze] Final target_role: {target_role} (original: {original_target_role}), hash={debug_hash}")
         
         # Try Anthropic first (primary LLM)
         anthropic_key = os.getenv("ANTHROPIC_API_KEY")
@@ -992,11 +1015,63 @@ async def analyze_resume(
                 # If strengths are too generic, we'll keep LLM output but log it
                 print(f"[Analyze] Strengths: {result_dict.get('strengths', [])}")
                 print(f"[Analyze] Areas for growth: {result_dict.get('areas_for_growth', [])}")
-        elif target_role and not target_role_matches:
+        elif original_target_role and not target_role_matches:
             # Target role doesn't match resume - analyze based on actual content
-            print(f"[Analyze] target_role '{target_role}' doesn't match resume content (detected: {detected_primary_domain}). Analyzing based on actual resume content instead, hash={debug_hash}")
+            print(f"[Analyze] target_role '{original_target_role}' doesn't match resume content (detected: {detected_primary_domain}). Analyzing based on actual resume content instead, hash={debug_hash}")
             # Don't force target_role - let the analysis be based on actual resume content
             # The domains are already correctly classified by classify_domains or LLM
+            
+            # POST-PROCESSING: If Animation/Motion Graphics is detected, ensure it's the top domain
+            if result_dict.get("domains"):
+                domains = result_dict["domains"]
+                animation_domain_index = next((i for i, d in enumerate(domains) if "animation" in d["name"].lower() or "motion graphics" in d["name"].lower() or "motion design" in d["name"].lower()), None)
+                
+                if animation_domain_index is not None and animation_domain_index > 0:
+                    # Move Animation/Motion Graphics to top
+                    animation_domain = domains.pop(animation_domain_index)
+                    animation_domain["score"] = 0.9  # High score for actual resume content
+                    domains.insert(0, animation_domain)
+                    result_dict["domains"] = domains
+                    print(f"[Analyze] Moved {animation_domain['name']} to top (actual resume content), hash={debug_hash}")
+                    
+                    # Update recommended_roles to Animation roles
+                    if not result_dict.get("recommended_roles") or any("ml" in r.lower() or "ai engineer" in r.lower() or "data scientist" in r.lower() for r in result_dict.get("recommended_roles", [])):
+                        result_dict["recommended_roles"] = ["Motion Graphics Designer", "3D Animator", "Character Animator", "Visual Effects Artist"]
+                        print(f"[Analyze] Updated recommended_roles to Animation roles, hash={debug_hash}")
+                    
+                    # Update strengths to Animation-specific (remove AI/ML strengths)
+                    if result_dict.get("strengths"):
+                        # Filter out AI/ML strengths, keep only Animation-related
+                        animation_strengths = [s for s in result_dict["strengths"] if any(kw in s.lower() for kw in ["animation", "motion", "maya", "blender", "after effects", "character", "3d", "2d", "unreal", "godot", "rigging", "storyboard"])]
+                        if animation_strengths:
+                            result_dict["strengths"] = animation_strengths
+                        else:
+                            # Generate Animation-specific strengths from resume
+                            result_dict["strengths"] = []
+                            if "after effects" in resume_lower:
+                                result_dict["strengths"].append("Experience with After Effects for motion graphics")
+                            if "maya" in resume_lower or "blender" in resume_lower:
+                                result_dict["strengths"].append("3D animation and modeling skills")
+                            if "character design" in resume_lower:
+                                result_dict["strengths"].append("Character design and animation expertise")
+                            if "unreal engine" in resume_lower or "godot" in resume_lower:
+                                result_dict["strengths"].append("Game engine experience for interactive animation")
+                    
+                    # Update areas_for_growth to Animation-specific (remove AI/ML gaps)
+                    if result_dict.get("areas_for_growth"):
+                        # Filter out AI/ML gaps, keep only Animation-related
+                        animation_gaps = [g for g in result_dict["areas_for_growth"] if any(kw in g.lower() for kw in ["animation", "motion", "rigging", "compositing", "rendering", "lighting", "texturing", "vfx", "visual effects"])]
+                        if not animation_gaps:
+                            # Generate Animation-specific gaps
+                            result_dict["areas_for_growth"] = [
+                                "Advanced rigging techniques for complex characters",
+                                "Compositing and visual effects integration",
+                                "Rendering optimization and pipeline efficiency",
+                                "Advanced lighting and texturing workflows"
+                            ]
+                        else:
+                            result_dict["areas_for_growth"] = animation_gaps
+                        print(f"[Analyze] Updated areas_for_growth to Animation-specific, hash={debug_hash}")
         
         if "keywords_detected" not in result_dict:
             top_domain = result_dict["domains"][0]["name"] if result_dict["domains"] else "Professional"
