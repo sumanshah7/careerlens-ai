@@ -251,24 +251,33 @@ class JobScoringService:
         # Calculate match percentage: (matched skills / total required skills) * 100
         total_required_skills = len([s for s, w in jd_vector.items() if w >= 1.0])  # Required skills (weight >= 1.0)
         total_important_skills = len([s for s, w in jd_vector.items() if w >= 0.7])  # Important skills (weight >= 0.7)
+        total_skills = len(jd_vector)  # Total skills in JD
         
-        if total_required_skills == 0:
-            # If no required skills defined, use base score calculation
+        if total_skills == 0:
+            # If no skills defined, use base score calculation
             normalized_score = max(0, min(100, 50 + score))
+        elif total_required_skills == 0:
+            # If no required skills defined, use match percentage based on all skills
+            match_percentage = (len(matched_skills) / total_skills) * 100 if total_skills > 0 else 0
+            normalized_score = max(0, min(100, match_percentage))
         else:
             # Calculate match percentage based on how many required skills are matched
             matched_required = len([s for s in matched_skills if jd_vector.get(s, 0) >= 1.0])
             match_percentage = (matched_required / total_required_skills) * 100 if total_required_skills > 0 else 0
             
-            # Also consider important skills
+            # Also consider important skills (weight >= 0.7)
             matched_important = len([s for s in matched_skills if jd_vector.get(s, 0) >= 0.7])
             important_percentage = (matched_important / total_important_skills) * 100 if total_important_skills > 0 else 0
             
-            # Weighted average: 70% required skills match, 30% important skills match
-            normalized_score = (match_percentage * 0.7) + (important_percentage * 0.3)
+            # Also consider all skills match
+            all_match_percentage = (len(matched_skills) / total_skills) * 100 if total_skills > 0 else 0
             
-            # Apply penalties for gaps (reduce score for missing skills)
-            gap_penalty = min(len(gaps) * 5, 30)  # Max 30 point penalty for gaps
+            # Weighted average: 50% required skills match, 30% important skills match, 20% all skills match
+            normalized_score = (match_percentage * 0.5) + (important_percentage * 0.3) + (all_match_percentage * 0.2)
+            
+            # Apply penalties for gaps (reduce score for missing required skills)
+            required_gaps = len([g for g in gaps if "required" in g.lower()])
+            gap_penalty = min(required_gaps * 3, 20)  # Max 20 point penalty for missing required skills
             normalized_score = max(0, min(100, normalized_score - gap_penalty))
         
         # Limit why_fit and gaps to top items
