@@ -1073,62 +1073,74 @@ async def analyze_resume(
                             result_dict["areas_for_growth"] = animation_gaps
                         print(f"[Analyze] Updated areas_for_growth to Animation-specific, hash={debug_hash}")
         
-        # FINAL POST-PROCESSING: Always check if Animation is detected and ML/AI is incorrectly top
-        # This runs regardless of target_role validation to ensure accuracy
-        if result_dict.get("domains") and original_target_role:
+        # FINAL POST-PROCESSING: ALWAYS check if Animation is detected and ML/AI is incorrectly top
+        # This runs ALWAYS regardless of target_role to ensure accuracy
+        if result_dict.get("domains"):
             domains = result_dict["domains"]
             top_domain_name = domains[0]["name"] if domains else ""
             animation_domain_index = next((i for i, d in enumerate(domains) if "animation" in d["name"].lower() or "motion graphics" in d["name"].lower() or "motion design" in d["name"].lower()), None)
             
-            # If ML/AI is top but Animation is detected and target_role was AI Engineer (but doesn't match)
-            if ("ml/ai" in top_domain_name.lower() or "ai" in top_domain_name.lower()) and animation_domain_index is not None:
-                # Check if resume has Animation keywords but NOT AI/ML keywords
-                animation_keywords = ["animation", "motion graphics", "after effects", "maya", "blender", "character design", "storyboarding", "3d animation", "2d animation", "motion design", "unreal engine", "godot", "motion capture", "mocap"]
-                ai_ml_keywords = ["machine learning", "ml", "pytorch", "tensorflow", "sklearn", "neural network", "deep learning", "llm", "transformer"]
+            # Check if resume has Animation keywords
+            animation_keywords = ["animation", "motion graphics", "after effects", "maya", "blender", "character design", "storyboarding", "3d animation", "2d animation", "motion design", "unreal engine", "godot", "motion capture", "mocap"]
+            ai_ml_keywords = ["machine learning", "ml", "pytorch", "tensorflow", "sklearn", "neural network", "deep learning", "llm", "transformer"]
+            
+            has_animation = any(kw in resume_lower for kw in animation_keywords)
+            has_ai_ml = any(kw in resume_lower for kw in ai_ml_keywords)
+            
+            # If ML/AI is top but Animation is detected and resume has Animation keywords (no AI/ML), force Animation to top
+            if ("ml/ai" in top_domain_name.lower() or "ai" in top_domain_name.lower()) and animation_domain_index is not None and has_animation and not has_ai_ml:
+                print(f"[Analyze] FINAL FIX: ML/AI is top but resume is clearly Animation. Moving Animation to top, hash={debug_hash}")
+                animation_domain = domains.pop(animation_domain_index)
+                animation_domain["score"] = 0.9  # High score for Animation
+                domains.insert(0, animation_domain)
+                # Reduce ML/AI score if it exists
+                for i, d in enumerate(domains):
+                    if "ml/ai" in d["name"].lower() or "ai" in d["name"].lower():
+                        domains[i]["score"] = min(0.5, d["score"])  # Reduce ML/AI score
+                result_dict["domains"] = domains
                 
-                has_animation = any(kw in resume_lower for kw in animation_keywords)
-                has_ai_ml = any(kw in resume_lower for kw in ai_ml_keywords)
+                # Force Animation-specific recommended_roles
+                result_dict["recommended_roles"] = ["Motion Graphics Designer", "3D Animator", "Character Animator", "Visual Effects Artist"]
                 
-                # If resume has Animation keywords but NOT AI/ML keywords, force Animation to top
-                if has_animation and not has_ai_ml:
-                    print(f"[Analyze] FINAL FIX: ML/AI is top but resume is clearly Animation. Moving Animation to top, hash={debug_hash}")
-                    animation_domain = domains.pop(animation_domain_index)
-                    animation_domain["score"] = 0.9
-                    domains.insert(0, animation_domain)
-                    result_dict["domains"] = domains
-                    
-                    # Force Animation-specific recommended_roles
-                    result_dict["recommended_roles"] = ["Motion Graphics Designer", "3D Animator", "Character Animator", "Visual Effects Artist"]
-                    
-                    # Force Animation-specific strengths
-                    animation_strengths = []
-                    if "after effects" in resume_lower:
-                        animation_strengths.append("Experience with After Effects for motion graphics")
-                    if "maya" in resume_lower or "blender" in resume_lower:
-                        animation_strengths.append("3D animation and modeling skills")
-                    if "character design" in resume_lower:
-                        animation_strengths.append("Character design and animation expertise")
-                    if "unreal engine" in resume_lower or "godot" in resume_lower:
-                        animation_strengths.append("Game engine experience for interactive animation")
-                    if "motion graphics" in resume_lower:
-                        animation_strengths.append("Motion graphics design and animation")
-                    if not animation_strengths:
-                        animation_strengths = ["Animation and motion graphics expertise"]
-                    result_dict["strengths"] = animation_strengths
-                    
-                    # Force Animation-specific areas_for_growth
-                    result_dict["areas_for_growth"] = [
-                        "Advanced rigging techniques for complex characters",
-                        "Compositing and visual effects integration",
-                        "Rendering optimization and pipeline efficiency",
-                        "Advanced lighting and texturing workflows"
-                    ]
-                    
-                    print(f"[Analyze] FINAL FIX: Updated to Animation/Motion Graphics analysis, hash={debug_hash}")
+                # Force Animation-specific strengths
+                animation_strengths = []
+                if "after effects" in resume_lower:
+                    animation_strengths.append("Experience with After Effects for motion graphics")
+                if "maya" in resume_lower or "blender" in resume_lower:
+                    animation_strengths.append("3D animation and modeling skills")
+                if "character design" in resume_lower:
+                    animation_strengths.append("Character design and animation expertise")
+                if "unreal engine" in resume_lower or "godot" in resume_lower:
+                    animation_strengths.append("Game engine experience for interactive animation")
+                if "motion graphics" in resume_lower:
+                    animation_strengths.append("Motion graphics design and animation")
+                if not animation_strengths:
+                    animation_strengths = ["Animation and motion graphics expertise"]
+                result_dict["strengths"] = animation_strengths
+                
+                # Force Animation-specific areas_for_growth
+                result_dict["areas_for_growth"] = [
+                    "Advanced rigging techniques for complex characters",
+                    "Compositing and visual effects integration",
+                    "Rendering optimization and pipeline efficiency",
+                    "Advanced lighting and texturing workflows"
+                ]
+                
+                print(f"[Analyze] FINAL FIX: Updated to Animation/Motion Graphics analysis (score: 0.9), hash={debug_hash}")
         
         if "keywords_detected" not in result_dict:
             top_domain = result_dict["domains"][0]["name"] if result_dict["domains"] else "Professional"
             result_dict["keywords_detected"] = extract_keywords(resume_text, top_domain)
+        
+        # Calculate and add score based on top domain (for frontend display)
+        if result_dict.get("domains") and len(result_dict["domains"]) > 0:
+            top_domain_score = result_dict["domains"][0]["score"]
+            # Convert domain score (0-1) to percentage (0-100) and cap at 95
+            domain_score_percent = min(95, max(0, int(top_domain_score * 100)))
+            result_dict["score"] = domain_score_percent
+            print(f"[Analyze] Calculated score: {domain_score_percent}% based on top domain: {result_dict['domains'][0]['name']} (score: {top_domain_score}), hash={debug_hash}")
+        else:
+            result_dict["score"] = 0
         
         # Add debug info
         result_dict["debug"] = {
