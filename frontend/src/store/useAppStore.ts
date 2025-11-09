@@ -12,6 +12,11 @@ interface AppStore {
   currentRole: string | null;
   currentResumeId: string | null;
   
+  // UI state
+  darkMode: boolean;
+  setDarkMode: (enabled: boolean) => void;
+  toggleDarkMode: () => void;
+  
   // Resume management (persisted)
   resumes: ResumeVersion[];
   resumeHistory: Map<string, ResumeProgress>;
@@ -46,6 +51,24 @@ export const useAppStore = create<AppStore>()(
       coach: null,
       currentRole: null,
       currentResumeId: null,
+      
+      // UI state
+      darkMode: typeof window !== 'undefined' ? localStorage.getItem('careerlens-dark-mode') === 'true' : false,
+      setDarkMode: (enabled) => {
+        set({ darkMode: enabled });
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('careerlens-dark-mode', enabled ? 'true' : 'false');
+          if (enabled) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      },
+      toggleDarkMode: () => {
+        const current = get().darkMode;
+        get().setDarkMode(!current);
+      },
       
       // Resume management (persisted)
       resumes: [],
@@ -355,6 +378,7 @@ export const useAppStore = create<AppStore>()(
       partialize: (state) => ({
         resumes: state.resumes,
         resumeHistory: Array.from(state.resumeHistory.entries()),
+        darkMode: state.darkMode,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -363,6 +387,17 @@ export const useAppStore = create<AppStore>()(
             state.resumeHistory = new Map(state.resumeHistory);
           } else if (!state.resumeHistory) {
             state.resumeHistory = new Map();
+          }
+          
+          // Initialize dark mode from localStorage
+          if (typeof window !== 'undefined') {
+            const darkMode = localStorage.getItem('careerlens-dark-mode') === 'true';
+            state.darkMode = darkMode;
+            if (darkMode) {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
           }
         }
       },

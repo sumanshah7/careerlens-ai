@@ -90,6 +90,15 @@ ROLE_COMPETENCY_MATRIX = {
         "API Design": ["api", "rest", "graphql", "endpoint"],
         "Testing": ["testing", "pytest", "unittest", "integration test"]
     },
+    "DevOps": {
+        "Containerization": ["docker", "containers", "containerization"],
+        "Orchestration": ["kubernetes", "k8s", "orchestration", "helm"],
+        "CI/CD": ["ci/cd", "jenkins", "github actions", "gitlab ci", "circleci", "travis", "continuous integration", "continuous deployment"],
+        "Infrastructure as Code": ["terraform", "ansible", "pulumi", "cloudformation", "infrastructure as code", "iac"],
+        "Cloud Platforms": ["aws", "azure", "gcp", "cloud", "ec2", "s3", "lambda"],
+        "Monitoring": ["monitoring", "prometheus", "grafana", "datadog", "new relic", "observability"],
+        "Scripting": ["bash", "python", "shell scripting", "automation"]
+    },
     # Healthcare & Clinical
     "Clinical Research Coordinator": {
         "IRB": ["irb", "institutional review board", "protocol", "submission"],
@@ -269,6 +278,10 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
             target_domain = "Backend"
         elif "full stack" in target_role_lower or "fullstack" in target_role_lower or "full-stack" in target_role_lower:
             target_domain = "Full-Stack"
+        elif "devops" in target_role_lower or "dev ops" in target_role_lower or "sre" in target_role_lower or "site reliability" in target_role_lower:
+            target_domain = "DevOps"
+        elif "cloud" in target_role_lower and ("engineer" in target_role_lower or "architect" in target_role_lower):
+            target_domain = "Cloud/SA"
         elif "software engineer" in target_role_lower or "software developer" in target_role_lower:
             target_domain = "Backend"
         
@@ -575,6 +588,21 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
             has_skill = any(kw in resume_lower for kw in keywords)
             if not has_skill:
                 areas_for_growth.append(f"{skill_area}")
+    elif "devops" in target_role_lower or "dev ops" in target_role_lower or "sre" in target_role_lower or "site reliability" in target_role_lower:
+        # DevOps specific gaps
+        matrix = ROLE_COMPETENCY_MATRIX.get("DevOps", {})
+        for skill_area, keywords in matrix.items():
+            has_skill = any(kw in resume_lower for kw in keywords)
+            if not has_skill:
+                areas_for_growth.append(f"{skill_area}")
+    elif "cloud" in target_role_lower and ("engineer" in target_role_lower or "architect" in target_role_lower):
+        # Cloud/SA specific gaps
+        if "aws" not in resume_lower and "azure" not in resume_lower and "gcp" not in resume_lower:
+            areas_for_growth.append("Cloud platform expertise (AWS, Azure, or GCP)")
+        if "terraform" not in resume_lower and "cloudformation" not in resume_lower:
+            areas_for_growth.append("Infrastructure as Code (Terraform or CloudFormation)")
+        if "architecture" not in resume_lower and "design" not in resume_lower:
+            areas_for_growth.append("Cloud architecture and design patterns")
     
     else:
         # Domain-based gaps if no specific target_role - use competency matrix if available
@@ -614,6 +642,10 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
             areas_for_growth.append("Deep learning frameworks (PyTorch or TensorFlow)")
         elif top_domain == "Frontend":
             areas_for_growth.append("Modern testing frameworks")
+        elif top_domain == "DevOps":
+            areas_for_growth.append("CI/CD pipeline automation")
+        elif top_domain == "Cloud/SA":
+            areas_for_growth.append("Cloud architecture and design patterns")
         elif "Clinical Research" in top_domain or "CRC" in top_domain:
             areas_for_growth.append("IRB protocol management")
         elif "Medical Assistant" in top_domain:
@@ -645,6 +677,10 @@ def keyword_based_analysis(resume_text: str, top_k_domains: int = 5, target_role
         recommended_roles = ["Full Stack Developer", "Full-Stack Engineer", "Software Engineer", "Web Developer"]
     elif top_domain == "Data Engineer":
         recommended_roles = ["Data Engineer", "ETL Engineer", "Data Pipeline Engineer", "Big Data Engineer"]
+    elif top_domain == "DevOps":
+        recommended_roles = ["DevOps Engineer", "Site Reliability Engineer (SRE)", "Cloud Engineer", "Infrastructure Engineer"]
+    elif top_domain == "Cloud/SA":
+        recommended_roles = ["Cloud Architect", "Solutions Architect", "Cloud Engineer", "AWS/Azure/GCP Specialist"]
     elif "clinical research" in top_domain_lower or "crc" in top_domain_lower:
         recommended_roles = ["Clinical Research Coordinator", "Research Assistant", "Clinical Trial Manager", "Regulatory Affairs Specialist"]
     elif "public health" in top_domain_lower:
@@ -787,6 +823,10 @@ async def analyze_resume(
                 target_domain = "Backend"
             elif "full stack" in target_role_lower or "fullstack" in target_role_lower or "full-stack" in target_role_lower:
                 target_domain = "Full-Stack"
+            elif "devops" in target_role_lower or "dev ops" in target_role_lower or "sre" in target_role_lower or "site reliability" in target_role_lower:
+                target_domain = "DevOps"
+            elif "cloud" in target_role_lower and ("engineer" in target_role_lower or "architect" in target_role_lower):
+                target_domain = "Cloud/SA"
             elif "software engineer" in target_role_lower or "software developer" in target_role_lower:
                 target_domain = "Backend"
             # Healthcare roles
@@ -873,6 +913,12 @@ async def analyze_resume(
                         recommended_roles.extend(["ML Engineer", "Data Scientist", "ML Researcher"])
                     elif "data analyst" in target_role_lower:
                         recommended_roles.extend(["Business Analyst", "BI Analyst", "Analytics Engineer"])
+                    elif "devops" in target_role_lower or "dev ops" in target_role_lower or "sre" in target_role_lower or "site reliability" in target_role_lower:
+                        recommended_roles.extend(["DevOps Engineer", "Site Reliability Engineer (SRE)", "Cloud Engineer", "Infrastructure Engineer"])
+                    elif "data engineer" in target_role_lower:
+                        recommended_roles.extend(["ETL Engineer", "Data Pipeline Engineer", "Big Data Engineer", "Analytics Engineer"])
+                    elif "cloud" in target_role_lower and ("engineer" in target_role_lower or "architect" in target_role_lower):
+                        recommended_roles.extend(["Cloud Architect", "Solutions Architect", "Cloud Engineer", "AWS/Azure/GCP Specialist"])
                     elif "registered nurse" in target_role_lower or "rn" in target_role_lower:
                         recommended_roles.extend(["Staff Nurse", "Charge Nurse", "Nurse Practitioner"])
                     elif "medical assistant" in target_role_lower:

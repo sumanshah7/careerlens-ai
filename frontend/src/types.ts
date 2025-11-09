@@ -157,6 +157,16 @@ export interface LinkedInJobSearchItem {
   matchScore: number; // 0..100
   reasons: string[]; // Top 3 match reasons
   gaps: string[]; // Top 3 skills to improve
+  skill_breakdown?: {
+    resume_skills: string[];
+    job_skills: string[];
+    matched_skills: string[];
+    missing_skills: string[];
+    match_percentage: number;
+    resume_skill_count: number;
+    job_skill_count: number;
+    matched_count: number;
+  };
 }
 
 export interface LinkedInJobSearchResponse {
@@ -173,7 +183,7 @@ export interface LinkedInJobSearchResponse {
 export interface GetJobsParams {
   role: string;
   location?: string;
-  radius_km?: number;
+  radius_km?: number; // Backend uses km (API requirement), frontend converts from miles
   remote?: boolean;
   limit?: number;
   cursor?: string;

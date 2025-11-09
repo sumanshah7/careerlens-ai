@@ -52,6 +52,68 @@ export const LinkedInJobCard = ({ job, onTailor }: LinkedInJobCardProps) => {
         </div>
       </CardHeader>
       <CardContent className="space-y-5 pt-6">
+        {/* Skill Match Breakdown */}
+        {job.skill_breakdown && (
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4">
+            <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-primary">
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+              </svg>
+              Skill Match Analysis
+            </h4>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Match Percentage</span>
+                <span className="text-lg font-bold text-primary">{job.skill_breakdown.match_percentage}%</span>
+              </div>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <div className="text-xs text-muted-foreground mb-1">Matched</div>
+                  <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                    {job.skill_breakdown.matched_count}
+                  </div>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <div className="text-xs text-muted-foreground mb-1">Your Skills</div>
+                  <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                    {job.skill_breakdown.resume_skill_count}
+                  </div>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <div className="text-xs text-muted-foreground mb-1">Job Requires</div>
+                  <div className="text-lg font-semibold text-amber-600 dark:text-amber-400">
+                    {job.skill_breakdown.job_skill_count}
+                  </div>
+                </div>
+              </div>
+              {job.skill_breakdown.matched_skills && job.skill_breakdown.matched_skills.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-green-700 dark:text-green-400 mb-2">Matched Skills:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {job.skill_breakdown.matched_skills.slice(0, 6).map((skill, idx) => (
+                      <span key={idx} className="px-2 py-1 bg-green-500/10 text-green-700 dark:text-green-400 rounded text-xs">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {job.skill_breakdown.missing_skills && job.skill_breakdown.missing_skills.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2">Missing Skills:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {job.skill_breakdown.missing_skills.slice(0, 6).map((skill, idx) => (
+                      <span key={idx} className="px-2 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded text-xs">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
         {job.reasons && job.reasons.length > 0 && (
           <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-4">
             <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-green-700 dark:text-green-400">

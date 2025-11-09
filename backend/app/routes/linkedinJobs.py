@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/jobs", tags=["linkedin-jobs"])
 class JobSearchParams(BaseModel):
     role: str
     location: Optional[str] = "US-Remote"
-    radius_km: Optional[int] = Field(default=50, ge=1, le=200)
+    radius_km: Optional[int] = Field(default=50, ge=1, le=200, description="Search radius in kilometers (converted from miles in frontend)")
     remote: Optional[bool] = False
     limit: Optional[int] = Field(default=15, ge=1, le=50)
     cursor: Optional[str] = None
@@ -54,13 +54,22 @@ def compute_match_score(
     job_keywords: List[str],
     job_title: str,
     job_description: str
-) -> tuple[int, List[str], List[str]]:
+) -> tuple[int, List[str], List[str], Dict[str, Any]]:
     """
     Compute match score based on skills overlap.
-    Returns: (matchScore 0-100, reasons, gaps)
+    Returns: (matchScore 0-100, reasons, gaps, skill_breakdown)
     """
     if not resume_skills:
-        return 50, ["Relevant role match"], []
+        return 50, ["Relevant role match"], [], {
+            "resume_skills": [],
+            "job_skills": [],
+            "matched_skills": [],
+            "missing_skills": [],
+            "match_percentage": 0,
+            "resume_skill_count": 0,
+            "job_skill_count": 0,
+            "matched_count": 0
+        }
     
     # Normalize to lowercase sets
     resume_set = {s.lower().strip() for s in resume_skills if s.strip()}
@@ -74,12 +83,20 @@ def compute_match_score(
     # Compute overlap
     overlap = resume_set.intersection(job_set)
     total_resume_skills = len(resume_set)
+    total_job_skills = len(job_set)
     
-    if total_resume_skills == 0:
+    # Calculate match percentage: (matched skills / job required skills) * 100
+    if total_job_skills == 0:
         match_score = 50
+        match_percentage = 0
     else:
-        # Match score: overlap ratio * 100, capped at 100
-        match_score = min(100, round((len(overlap) / max(1, total_resume_skills)) * 100))
+        # Match percentage based on how many job requirements you meet
+        match_percentage = round((len(overlap) / total_job_skills) * 100)
+        # Also consider resume skill coverage
+        resume_coverage = round((len(overlap) / max(1, total_resume_skills)) * 100) if total_resume_skills > 0 else 0
+        # Weighted average: 70% job requirement match, 30% resume coverage
+        match_score = round((match_percentage * 0.7) + (resume_coverage * 0.3))
+        match_score = min(100, max(0, match_score))
     
     # Generate reasons (top 3 matching skills)
     reasons = []
@@ -96,7 +113,19 @@ def compute_match_score(
         gaps = list(missing)[:3]
         gaps = [f"Consider learning {g.title()}" for g in gaps]
     
-    return match_score, reasons, gaps
+    # Skill breakdown for detailed comparison
+    skill_breakdown = {
+        "resume_skills": sorted(list(resume_set)),
+        "job_skills": sorted(list(job_set)),
+        "matched_skills": sorted(list(overlap)),
+        "missing_skills": sorted(list(missing)),
+        "match_percentage": match_percentage,
+        "resume_skill_count": total_resume_skills,
+        "job_skill_count": total_job_skills,
+        "matched_count": len(overlap)
+    }
+    
+    return match_score, reasons, gaps, skill_breakdown
 
 
 def map_rapidapi_response_to_job(
@@ -125,13 +154,26 @@ def map_rapidapi_response_to_job(
     # Extract keywords from job
     job_keywords = extract_skills_from_text(f"{title} {description}")
     
-    # Compute match score
-    match_score, reasons, gaps = compute_match_score(
+    # Compute match score with skill breakdown
+    match_result = compute_match_score(
         resume_skills,
         job_keywords,
         title,
         description
     )
+    
+    # Handle both old and new return formats
+    if len(match_result) == 4:
+        match_score, reasons, gaps, skill_breakdown = match_result
+    else:
+        match_score, reasons, gaps = match_result
+        skill_breakdown = {
+            "resume_skills": resume_skills,
+            "job_skills": job_keywords,
+            "matched_skills": [],
+            "missing_skills": [],
+            "match_percentage": match_score
+        }
     
     # Generate ID if missing
     if not job_id or job_id == "":
@@ -148,7 +190,8 @@ def map_rapidapi_response_to_job(
         description_snippet=description[:200] + "..." if len(description) > 200 else description,
         matchScore=match_score,
         reasons=reasons,
-        gaps=gaps
+        gaps=gaps,
+        skill_breakdown=skill_breakdown
     )
 
 
@@ -156,21 +199,26 @@ def map_rapidapi_response_to_job(
 async def search_linkedin_jobs(
     role: str = Query(..., description="Job role/title to search for"),
     location: str = Query("US-Remote", description="Location for job search"),
-    radius_km: int = Query(50, ge=1, le=200, description="Search radius in kilometers"),
+    radius_km: int = Query(50, ge=1, le=200, description="Search radius in kilometers (converted from miles in frontend)"),
     remote: bool = Query(False, description="Filter for remote jobs only"),
     limit: int = Query(15, ge=1, le=50, description="Maximum number of jobs to return"),
     cursor: Optional[str] = Query(None, description="Pagination cursor"),
+    resume_skills: Optional[str] = Query(None, description="Comma-separated list of resume skills from analysis"),
     response: Response = None
 ):
     """
     Search LinkedIn jobs using RapidAPI LinkedIn Job Search API (Ultra - Get Jobs Hourly)
+    Compares resume skills with job requirements to calculate match percentage
     """
     # Set cache control
     response.headers["Cache-Control"] = "no-store"
     
-    # Get resume skills from stored analysis (if available)
-    # For now, extract from role - in production, get from user's stored analysis
-    resume_skills = [role.lower()]  # Placeholder - should come from stored analysis
+    # Parse resume skills from query parameter
+    if resume_skills:
+        resume_skills_list = [s.strip() for s in resume_skills.split(',') if s.strip()]
+    else:
+        # Fallback: extract from role
+        resume_skills_list = [role.lower()]
     
     # Check if RapidAPI key is available - if not, use free job service
     if not settings.rapidapi_key or not settings.rapidapi_key.strip():
@@ -184,7 +232,7 @@ async def search_linkedin_jobs(
         # Initialize scoring service
         scoring_service = JobScoringService()
         candidate_vector = scoring_service.build_candidate_skill_vector({
-            "skills": {"core": resume_skills, "adjacent": [], "advanced": []}
+            "skills": {"core": resume_skills_list, "adjacent": [], "advanced": []}
         })
         
         jobs = []
@@ -306,7 +354,7 @@ async def search_linkedin_jobs(
                             continue
                         
                         # Map to our schema
-                        job_item = map_rapidapi_response_to_job(job_data, resume_skills)
+                        job_item = map_rapidapi_response_to_job(job_data, resume_skills_list)
                         jobs.append(job_item)
                         processed_count += 1
                     except Exception as e:
@@ -323,7 +371,7 @@ async def search_linkedin_jobs(
                 free_jobs_data = free_job_service.search_jobs(role, location, limit)
                 scoring_service = JobScoringService()
                 candidate_vector = scoring_service.build_candidate_skill_vector({
-                    "skills": {"core": resume_skills, "adjacent": [], "advanced": []}
+                    "skills": {"core": resume_skills_list, "adjacent": [], "advanced": []}
                 })
                 
                 jobs = []
@@ -378,7 +426,7 @@ async def search_linkedin_jobs(
                 free_jobs_data = free_job_service.search_jobs(role, location, limit)
                 scoring_service = JobScoringService()
                 candidate_vector = scoring_service.build_candidate_skill_vector({
-                    "skills": {"core": resume_skills, "adjacent": [], "advanced": []}
+                    "skills": {"core": resume_skills_list, "adjacent": [], "advanced": []}
                 })
                 
                 jobs = []
@@ -433,7 +481,7 @@ async def search_linkedin_jobs(
                 free_jobs_data = free_job_service.search_jobs(role, location, limit)
                 scoring_service = JobScoringService()
                 candidate_vector = scoring_service.build_candidate_skill_vector({
-                    "skills": {"core": resume_skills, "adjacent": [], "advanced": []}
+                    "skills": {"core": resume_skills_list, "adjacent": [], "advanced": []}
                 })
                 
                 jobs = []

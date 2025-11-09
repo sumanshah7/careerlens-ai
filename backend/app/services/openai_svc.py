@@ -8,6 +8,7 @@ from openai import OpenAI
 from pydantic import ValidationError
 from app.models.schemas import TailorResponse, AnalyzeResponse
 from app.config import settings
+from app.services.pii_redaction import redact_pii
 
 
 class OpenAIService:
@@ -41,28 +42,70 @@ class OpenAIService:
         """Build the prompt for GPT"""
         schema_json = self._get_schema_json()
         
-        base_prompt = f"""Create tailored resume content for the following job description.
+        base_prompt = f"""You are an expert resume writer and career coach. Create highly tailored, professional resume content and cover letter for the following job application.
 
-Resume:
+RESUME:
 {resume}
 
-Job Description:
+JOB DESCRIPTION:
 {jd}
+
+INSTRUCTIONS:
+1. Analyze the job description carefully to identify:
+   - Key required skills and technologies
+   - Preferred qualifications and experience
+   - Company values and culture indicators
+   - Specific responsibilities and expectations
+
+2. Match the resume content to the job requirements by:
+   - Highlighting relevant experiences from the resume
+   - Emphasizing skills that align with the job description
+   - Using keywords from the job description naturally
+   - Quantifying achievements where possible
+
+3. Create professional, compelling content that:
+   - Demonstrates clear value proposition
+   - Shows understanding of the role
+   - Uses industry-appropriate language
+   - Is specific and actionable
 """
         
         if is_retry:
             base_prompt += "\nIMPORTANT: Your previous response did not match the required schema. Please correct it to match exactly.\n"
         
         base_prompt += f"""
-Create 2-4 STAR-format bullets, a 50-word elevator pitch, and a 120-180 word cover letter. Return JSON matching TailorRes.
+OUTPUT REQUIREMENTS:
 
-Requirements:
-- bullets: array of 2-4 resume bullets in STAR format (Situation, Task, Action, Result)
-- pitch: exactly 50 words elevator pitch
-- coverLetter: 120-180 word cover letter tailored to the job description
+1. bullets: Array of 2-4 resume bullet points in STAR format (Situation, Task, Action, Result)
+   - Each bullet should be 1-2 sentences
+   - Include quantifiable metrics when possible (e.g., "increased performance by 40%", "reduced costs by $50K")
+   - Use action verbs (Led, Developed, Implemented, Optimized, etc.)
+   - Focus on achievements relevant to the job description
+   - Example: "Led a cross-functional team of 5 engineers to refactor legacy codebase using modern frameworks, resulting in 40% performance improvement and 50% reduction in bug reports"
 
-STAR Format Example:
-"Led (Situation) a team of 5 engineers (Task) to refactor legacy codebase (Action), resulting in 40% performance improvement and 50% reduction in bug reports (Result)"
+2. pitch: A compelling 50-word elevator pitch (exactly 50 words)
+   - Start with your value proposition
+   - Highlight 2-3 key strengths relevant to the role
+   - Show enthusiasm for the position
+   - Be concise and impactful
+   - Example: "I'm a passionate software engineer with 5+ years building scalable systems. My expertise in Python, cloud architecture, and team leadership, combined with a track record of delivering high-impact solutions, makes me an ideal fit for this role."
+
+3. coverLetter: A professional 120-180 word cover letter
+   - Opening: Express interest and mention the specific position
+   - Body (2-3 paragraphs): 
+     * Highlight 2-3 most relevant experiences/achievements
+     * Connect your skills to the job requirements
+     * Show understanding of the company/role
+   - Closing: Express enthusiasm and call to action
+   - Use professional but warm tone
+   - Be specific about why you're a great fit
+
+CRITICAL RULES:
+- All content must be based ONLY on information from the provided resume
+- Do NOT invent experiences, skills, or achievements not mentioned in the resume
+- Use keywords from the job description naturally (don't force them)
+- Maintain professional tone throughout
+- Ensure all content is truthful and verifiable from the resume
 
 Return STRICT minified JSON exactly matching this schema: {schema_json}
 
@@ -88,13 +131,18 @@ Return ONLY valid JSON, no markdown, no code blocks, no explanations."""
         if not self.client:
             raise ValueError("OPENAI_API_KEY is not set")
         
+        # Redact PII from resume and JD before sending to LLM
+        redacted_resume = redact_pii(resume)
+        redacted_jd = redact_pii(jd)
+        
         last_error = None
         current_model = self.model
         
         for attempt in range(self.max_retries):
             try:
                 is_retry = attempt > 0
-                prompt = self._build_prompt(resume, jd, style, is_retry)
+                # Use redacted text for prompt
+                prompt = self._build_prompt(redacted_resume, redacted_jd, style, is_retry)
                 
                 try:
                     response = self.client.chat.completions.create(
@@ -102,15 +150,15 @@ Return ONLY valid JSON, no markdown, no code blocks, no explanations."""
                         messages=[
                             {
                                 "role": "system",
-                                "content": "You are a professional resume writer. Return only valid JSON matching the specified schema."
+                                "content": "You are an expert resume writer and career coach with 10+ years of experience helping professionals land their dream jobs. You specialize in creating compelling, tailored resumes and cover letters that highlight candidates' strengths and align perfectly with job requirements. Always base your content strictly on the provided resume information. Return only valid JSON matching the specified schema."
                             },
                             {
                                 "role": "user",
                                 "content": prompt
                             }
                         ],
-                        temperature=0.7,
-                        max_tokens=1000,
+                        temperature=0.8,  # Slightly higher for more creative, tailored content
+                        max_tokens=2000,  # Increased for better cover letters
                         response_format={"type": "json_object"}
                     )
                 except Exception as model_error:
@@ -276,6 +324,9 @@ Order by score descending, with the PRIMARY role always first.
 - If top domain is "Frontend": ["Frontend Engineer", "UI Developer", "React Developer"]
 - If top domain is "Backend": ["Backend Engineer", "Software Engineer", "API Developer"]
 - If top domain is "ML/AI": ["ML Engineer", "Data Scientist", "AI Engineer"]
+- If top domain is "DevOps": ["DevOps Engineer", "Site Reliability Engineer (SRE)", "Cloud Engineer", "Infrastructure Engineer"]
+- If top domain is "Cloud/SA": ["Cloud Architect", "Solutions Architect", "Cloud Engineer", "AWS/Azure/GCP Specialist"]
+- If top domain is "Data Engineer": ["Data Engineer", "ETL Engineer", "Data Pipeline Engineer", "Big Data Engineer"]
 - For Clinical Research Coordinator: ["Clinical Research Coordinator", "Research Assistant", "Clinical Trial Manager"]
 - For Public Health Analyst: ["Public Health Analyst", "Epidemiologist", "Health Policy Analyst"]
 - For Teacher: ["Teacher", "Education Coordinator", "Curriculum Specialist"]
@@ -324,13 +375,17 @@ Return ONLY valid JSON, no markdown, no code blocks, no explanations."""
         if not self.client:
             raise ValueError("OPENAI_API_KEY is not set")
         
+        # Redact PII before sending to LLM
+        redacted_text = redact_pii(text)
+        
         last_error = None
         current_model = self.model
         
         for attempt in range(self.max_retries):
             try:
                 is_retry = attempt > 0
-                prompt = self._build_analysis_prompt(text, target_role, is_retry)
+                # Use redacted text for prompt
+                prompt = self._build_analysis_prompt(redacted_text, target_role, is_retry)
                 
                 try:
                     response = self.client.chat.completions.create(

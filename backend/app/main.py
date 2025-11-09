@@ -2,10 +2,36 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from mangum import Mangum
-from app.routes import analyze, jobs, tailor, coach, predict, upload, roleMatch, generatePlan, jobSearch, linkedinJobs
+from app.routes import analyze, jobs, tailor, coach, predict, upload, roleMatch, generatePlan, jobSearch, linkedinJobs, predictScore
 import traceback
+import time
+import uuid
+from datetime import datetime
 
 app = FastAPI(title="CareerLens AI API", version="1.0.0")
+
+# Request ID middleware for observability
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    """Add request ID to all requests for tracing"""
+    # Generate short request ID (first 8 chars of UUID)
+    request_id = str(uuid.uuid4())[:8]
+    request.state.request_id = request_id
+    request.state.start_time = time.time()
+    
+    # Process request
+    response = await call_next(request)
+    
+    # Calculate duration
+    duration_ms = (time.time() - request.state.start_time) * 1000
+    
+    # Structured logging (no PII)
+    print(f"[Request] rid={request_id} method={request.method} path={request.url.path} status={response.status_code} dur_ms={duration_ms:.2f}")
+    
+    # Add request ID to response headers
+    response.headers["X-Request-ID"] = request_id
+    
+    return response
 
 # CORS middleware - allow localhost ports (Vite default ports)
 app.add_middleware(
@@ -35,6 +61,7 @@ app.include_router(roleMatch.router)
 app.include_router(generatePlan.router)
 app.include_router(jobSearch.router)
 app.include_router(linkedinJobs.router)
+app.include_router(predictScore.router)
 
 
 @app.get("/")

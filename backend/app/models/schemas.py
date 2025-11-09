@@ -109,6 +109,7 @@ class LinkedInJobSearchItem(BaseModel):
     matchScore: int = Field(default=0, ge=0, le=100, description="Match score from 0 to 100")
     reasons: List[str] = Field(default_factory=list, description="Top 3 match reasons")
     gaps: List[str] = Field(default_factory=list, description="Top 3 skills to improve")
+    skill_breakdown: dict | None = Field(default=None, description="Detailed skill comparison breakdown")
 
 
 class LinkedInJobSearchResponse(BaseModel):

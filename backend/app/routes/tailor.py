@@ -8,9 +8,13 @@ router = APIRouter(prefix="/tailor", tags=["tailor"])
 
 
 class TailorRequest(BaseModel):
-    resume: str
-    jd: str
+    resume: str | None = None
+    jd: str | None = None
     style: str = "STAR"
+    resume_text: str | None = None  # Alternative field name
+    job_title: str | None = None  # Optional job title
+    company: str | None = None  # Optional company name
+    job_description: str | None = None  # Alternative field name
 
 
 @router.post("", response_model=TailorResponse)
@@ -19,10 +23,21 @@ async def tailor_resume(request: TailorRequest) -> TailorResponse:
     Tailor resume and cover letter for a specific job using GPT.
     """
     try:
+        # Use resume_text if provided, otherwise use resume (backward compatibility)
+        resume_text = request.resume_text or request.resume
+        # Use job_description if provided, otherwise use jd (backward compatibility)
+        jd_text = request.job_description or request.jd
+        
+        # Validate that we have both resume and job description
+        if not resume_text:
+            raise HTTPException(status_code=400, detail="resume or resume_text is required")
+        if not jd_text:
+            raise HTTPException(status_code=400, detail="jd or job_description is required")
+        
         # Call OpenAI service
         result_dict = openai_service.tailor_for_job(
-            resume=request.resume,
-            jd=request.jd,
+            resume=resume_text,
+            jd=jd_text,
             style=request.style
         )
         

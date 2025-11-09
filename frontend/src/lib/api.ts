@@ -212,6 +212,7 @@ export const searchJobs = async (
     remote?: boolean;
     limit?: number;
     cursor?: string | null;
+    resume_skills?: string[]; // Resume skills from analysis
   },
   signal?: AbortSignal
 ): Promise<LinkedInJobSearchResponse> => {
@@ -225,6 +226,7 @@ export const searchJobs = async (
     ...(params.remote !== undefined && { remote: params.remote.toString() }),
     ...(params.limit && { limit: params.limit.toString() }),
     ...(params.cursor && { cursor: params.cursor }),
+    ...(params.resume_skills && params.resume_skills.length > 0 && { resume_skills: params.resume_skills.join(',') }),
   });
 
   const fullUrl = `${url}?${queryParams.toString()}`;

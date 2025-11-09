@@ -22,9 +22,9 @@ function App() {
           v7_relativeSplatPath: true,
         }}
       >
-        <div className="min-h-screen h-full bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="min-h-screen h-full bg-gradient-to-br from-background via-background to-muted/20 transition-colors">
           <TopNav />
-          <main className="min-h-[calc(100vh-4rem)]">
+          <main className="min-h-[calc(100vh-4rem)] page-transition">
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />

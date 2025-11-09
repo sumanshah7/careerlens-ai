@@ -40,7 +40,7 @@ export const Jobs = () => {
   const [filters, setFilters] = useState({
     role: '',
     location: 'US-Remote',
-    radius_km: 50,
+    radius_miles: 25, // Default 25 miles (converted to ~40 km for API)
     remote: false,
   });
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -105,13 +105,22 @@ export const Jobs = () => {
     }
 
     try {
+      // Get resume skills from analysis if available
+      const resumeSkills: string[] = [];
+      if (analysis?.skills) {
+        resumeSkills.push(...(analysis.skills.core || []));
+        resumeSkills.push(...(analysis.skills.adjacent || []));
+        resumeSkills.push(...(analysis.skills.advanced || []));
+      }
+      
       const response = await searchJobs({
         role: filters.role,
         location: filters.location,
-        radius_km: filters.radius_km,
+        radius_km: Math.round(filters.radius_miles * 1.60934), // Convert miles to km
         remote: filters.remote,
         limit: 15,
         cursor: cursor,
+        resume_skills: resumeSkills.length > 0 ? resumeSkills : undefined,
       }, abortController.signal);
       
       // Check if request was aborted
@@ -279,14 +288,14 @@ export const Jobs = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="radius">Radius (km)</Label>
+                <Label htmlFor="radius">Radius (miles)</Label>
                 <Input
                   id="radius"
                   type="number"
                   min="1"
-                  max="200"
-                  value={filters.radius_km}
-                  onChange={(e) => setFilters(prev => ({ ...prev, radius_km: parseInt(e.target.value) || 50 }))}
+                  max="125"
+                  value={filters.radius_miles}
+                  onChange={(e) => setFilters(prev => ({ ...prev, radius_miles: parseInt(e.target.value) || 25 }))}
                 />
               </div>
               <div className="flex items-end">

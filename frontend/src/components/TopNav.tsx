@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
+import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/button';
-import { Home, BarChart3, Briefcase, LayoutDashboard, Settings, BookOpen, LogOut, TrendingUp } from 'lucide-react';
+import { Home, BarChart3, Briefcase, LayoutDashboard, Settings, BookOpen, LogOut, TrendingUp, Moon, Sun } from 'lucide-react';
 
 const navItems = [
   { path: '/home', label: 'Home', icon: Home },
@@ -18,6 +19,7 @@ export const TopNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, signOut } = useAuth();
+  const { darkMode, toggleDarkMode } = useAppStore();
 
   const handleSignOut = async () => {
     try {
@@ -67,6 +69,19 @@ export const TopNav = () => {
           </div>
           {currentUser && (
             <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleDarkMode}
+                className="transition-colors"
+                aria-label="Toggle dark mode"
+              >
+                {darkMode ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
               <span className="text-sm text-muted-foreground">{currentUser.email}</span>
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />

@@ -8,6 +8,7 @@ from anthropic import Anthropic
 from pydantic import ValidationError
 from app.models.schemas import AnalyzeResponse, Skill
 from app.config import settings
+from app.services.pii_redaction import redact_pii
 
 
 class AnthropicService:
@@ -130,6 +131,9 @@ Order by score descending, with the PRIMARY role always first.
 - If top domain is "Frontend": ["Frontend Engineer", "UI Developer", "React Developer"]
 - If top domain is "Backend": ["Backend Engineer", "Software Engineer", "API Developer"]
 - If top domain is "ML/AI": ["ML Engineer", "Data Scientist", "AI Engineer"]
+- If top domain is "DevOps": ["DevOps Engineer", "Site Reliability Engineer (SRE)", "Cloud Engineer", "Infrastructure Engineer"]
+- If top domain is "Cloud/SA": ["Cloud Architect", "Solutions Architect", "Cloud Engineer", "AWS/Azure/GCP Specialist"]
+- If top domain is "Data Engineer": ["Data Engineer", "ETL Engineer", "Data Pipeline Engineer", "Big Data Engineer"]
 - For Clinical Research Coordinator: ["Clinical Research Coordinator", "Research Assistant", "Clinical Trial Manager"]
 - For Public Health Analyst: ["Public Health Analyst", "Epidemiologist", "Health Policy Analyst"]
 - For Teacher: ["Teacher", "Education Coordinator", "Curriculum Specialist"]
@@ -178,12 +182,16 @@ Return ONLY valid JSON, no markdown, no code blocks, no explanations."""
         if not self.client.api_key:
             raise ValueError("ANTHROPIC_API_KEY is not set")
         
+        # Redact PII before sending to LLM
+        redacted_text = redact_pii(text)
+        
         last_error = None
         
         for attempt in range(self.max_retries):
             try:
                 is_retry = attempt > 0
-                prompt = self._build_prompt(text, target_role, is_retry)
+                # Use redacted text for prompt
+                prompt = self._build_prompt(redacted_text, target_role, is_retry)
                 
                 message = self.client.messages.create(
                     model=self.model,
