@@ -783,7 +783,7 @@ async def analyze_resume(
         anthropic_key = os.getenv("ANTHROPIC_API_KEY")
         if anthropic_key:
             try:
-                result_dict = anthropic_service.analyze_resume(
+        result_dict = anthropic_service.analyze_resume(
                     text=resume_text,
                     target_role=target_role
                 )
@@ -1088,6 +1088,8 @@ async def analyze_resume(
             has_ai_ml = any(kw in resume_lower for kw in ai_ml_keywords)
             
             # If ML/AI is top but Animation is detected and resume has Animation keywords (no AI/ML), force Animation to top
+            # BUT: Only override areas_for_growth if NO target_role was selected (user wants to see Animation gaps)
+            # If target_role was selected (e.g., "AI Engineer"), keep areas_for_growth for that target_role
             if ("ml/ai" in top_domain_name.lower() or "ai" in top_domain_name.lower()) and animation_domain_index is not None and has_animation and not has_ai_ml:
                 print(f"[Analyze] FINAL FIX: ML/AI is top but resume is clearly Animation. Moving Animation to top, hash={debug_hash}")
                 animation_domain = domains.pop(animation_domain_index)
@@ -1118,13 +1120,20 @@ async def analyze_resume(
                     animation_strengths = ["Animation and motion graphics expertise"]
                 result_dict["strengths"] = animation_strengths
                 
-                # Force Animation-specific areas_for_growth
-                result_dict["areas_for_growth"] = [
-                    "Advanced rigging techniques for complex characters",
-                    "Compositing and visual effects integration",
-                    "Rendering optimization and pipeline efficiency",
-                    "Advanced lighting and texturing workflows"
-                ]
+                # Only override areas_for_growth if NO target_role was selected
+                # If target_role was selected (e.g., "AI Engineer"), keep the target_role-specific gaps
+                if not original_target_role:
+                    # No target_role selected - show Animation gaps based on detected domain
+                    result_dict["areas_for_growth"] = [
+                        "Advanced rigging techniques for complex characters",
+                        "Compositing and visual effects integration",
+                        "Rendering optimization and pipeline efficiency",
+                        "Advanced lighting and texturing workflows"
+                    ]
+                    print(f"[Analyze] FINAL FIX: Updated areas_for_growth to Animation-specific (no target_role), hash={debug_hash}")
+                else:
+                    # Target_role was selected - keep the target_role-specific gaps (don't override)
+                    print(f"[Analyze] FINAL FIX: Keeping target_role-specific areas_for_growth for '{original_target_role}', hash={debug_hash}")
                 
                 print(f"[Analyze] FINAL FIX: Updated to Animation/Motion Graphics analysis (score: 0.9), hash={debug_hash}")
         
