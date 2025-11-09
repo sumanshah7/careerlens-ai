@@ -128,7 +128,21 @@ Order by score descending, with the PRIMARY role always first.
 
 3. strengths: Extract 3-5 SPECIFIC strengths ONLY if evidenced in resume_text. Mention actual technologies, tools, certifications, or experiences. NO defaults/templates. For healthcare: mention specific systems (Epic, EHR), certifications (CPR, BLS), procedures. For education: mention teaching methods, curriculum design, assessment tools. For finance: mention software (QuickBooks), standards (GAAP), processes.
 
-4. areas_for_growth: Build by comparing resume skills against role-specific competencies for target_role. Infer competencies from the role name and industry standards. For Clinical Research Coordinator: IRB protocols, GCP, REDCap, informed consent. For Public Health Analyst: epidemiology, SPSS/Stata/R, survey design, policy analysis. For Teacher: lesson planning, IEP management, classroom strategies. For Accountant: GAAP, QuickBooks, reconciliation, audits. Identify 3-5 specific gaps that are actually missing. NEVER leave this empty - always include at least 2 gaps.
+4. areas_for_growth: CRITICAL - This MUST be dynamic and resume-specific. Follow these steps:
+   a) First, extract ALL skills from the resume (from the skills section you identified above: core, adjacent, advanced, and keywords_detected)
+   b) Then, identify the required competencies for target_role based on industry standards:
+      * AI Engineer: Deep learning frameworks (PyTorch/TensorFlow), LLMs/transformers, MLOps, vector databases, Python ML, cloud ML platforms
+      * Data Analyst: SQL (joins, window functions, CTEs), Excel (pivot tables, VLOOKUP), BI tools (Power BI/Tableau), statistics, Python (pandas/numpy), data modeling/ETL
+      * Clinical Research Coordinator: IRB protocols, GCP, REDCap, informed consent, clinical trial management
+      * Public Health Analyst: Epidemiology, SPSS/Stata/R, survey design, policy analysis
+      * Teacher: Lesson planning, IEP management, classroom strategies, assessment design
+      * Accountant: GAAP, QuickBooks, reconciliation, financial reporting, audit procedures
+   c) Compare the resume skills (from step a) against the required competencies (from step b)
+   d) ONLY include gaps that are ACTUALLY MISSING from the resume - do NOT include skills that are already present
+   e) Be specific: Instead of "Deep learning frameworks", say "PyTorch or TensorFlow" if neither is in the resume
+   f) If the resume already has most required skills, identify advanced/next-level skills that are missing
+   g) NEVER use templates - each gap must be specific to what's missing in THIS resume
+   h) Identify 3-5 specific gaps that are actually missing. NEVER leave this empty - always include at least 2 gaps.
 
 5. recommended_roles: List 2-4 roles aligned to the TOP DOMAIN (primary role) and evidence. Use role names from the same profession family. 
 - If top domain is "Data Analyst": ["Data Analyst", "Business Analyst", "BI Analyst", "Analytics Engineer"]

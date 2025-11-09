@@ -916,12 +916,50 @@ async def analyze_resume(
             provider = "heuristic"
         
         # Ensure areas_for_growth is never empty (post-process LLM output if needed)
+        # CRITICAL: Only fill if LLM output is empty - do NOT override LLM output
         if result_dict and (not result_dict.get("areas_for_growth") or len(result_dict.get("areas_for_growth", [])) == 0):
             print(f"[Analyze] areas_for_growth is empty, filling from competency matrix: hash={debug_hash}, target_role={target_role}")
-            # Use keyword-based analysis to fill gaps
+            # Use keyword-based analysis to fill gaps (only if LLM didn't generate any)
             top_domain = result_dict.get("domains", [{}])[0].get("name", "Professional") if result_dict.get("domains") else "Professional"
             fallback_gaps = keyword_based_analysis(resume_text, request.top_k_domains, target_role)
             result_dict["areas_for_growth"] = fallback_gaps.get("areas_for_growth", [])
+        elif result_dict and result_dict.get("areas_for_growth"):
+            # Validate LLM output: ensure it's dynamic and resume-specific
+            # Check if areas_for_growth looks template-based (generic gaps that don't consider actual resume skills)
+            areas_for_growth = result_dict.get("areas_for_growth", [])
+            resume_skills = []
+            if result_dict.get("skills"):
+                resume_skills.extend(result_dict["skills"].get("core", []))
+                resume_skills.extend(result_dict["skills"].get("adjacent", []))
+                resume_skills.extend(result_dict["skills"].get("advanced", []))
+            resume_skills.extend(result_dict.get("keywords_detected", []))
+            resume_skills_lower = [s.lower() for s in resume_skills]
+            
+            # Check if gaps are generic templates that don't consider actual resume skills
+            # A gap is likely template-based if it mentions a skill that's already in the resume
+            # OR if it's a generic gap that doesn't consider what's actually missing
+            template_gaps = []
+            for gap in areas_for_growth:
+                gap_lower = gap.lower()
+                # Check if gap mentions a skill that's already in resume (this means it's template-based)
+                is_template = False
+                for skill in resume_skills_lower:
+                    # If gap mentions a skill that's already in resume, it's likely template-based
+                    # Example: gap says "PyTorch or TensorFlow" but resume already has "PyTorch"
+                    if skill in gap_lower:
+                        # Check if the gap is suggesting something that's already present
+                        # This is a template gap that doesn't consider actual resume content
+                        is_template = True
+                        break
+                if is_template:
+                    template_gaps.append(gap)
+            
+            # If too many gaps are template-based (mention skills already in resume), regenerate
+            if len(template_gaps) >= len(areas_for_growth) * 0.5:  # If 50%+ are template-based
+                print(f"[Analyze] WARNING: areas_for_growth looks template-based ({len(template_gaps)}/{len(areas_for_growth)} gaps mention skills already in resume). Regenerating using actual skills comparison, hash={debug_hash}")
+                # Regenerate using actual skills comparison (this compares actual resume skills vs target role requirements)
+                fallback_gaps = keyword_based_analysis(resume_text, request.top_k_domains, target_role)
+                result_dict["areas_for_growth"] = fallback_gaps.get("areas_for_growth", [])
         
         # Ensure we have the required fields
         if "domains" not in result_dict:
